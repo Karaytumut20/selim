@@ -5,16 +5,18 @@ import { BoardVisual } from "../components/board-visual";
 import { ConversionBand, PageShell, SectionHeading } from "../components/page-shell";
 import { ProductCard } from "../components/product-card";
 import { SiteImage } from "../components/site-image";
+import { JsonLd } from "../components/json-ld";
 import { getPublishedProducts } from "../lib/catalog";
 import { categories, primaryProduct as fallbackPrimaryProduct, resolveProductImage } from "../lib/products";
 import { siteConfig } from "../lib/site-config";
+import { pageMetadata } from "../lib/seo";
 import { buildGeneralRepairUrl, buildProductRepairUrl } from "../lib/whatsapp";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Industrial Circuit Board Repair USA",
   description: "Component-level industrial electronic repair for control boards, PLC electronics, servo drives, HMI boards, CNC controls, and power supply PCBs.",
-  alternates: { canonical: "/" },
-};
+  path: "/",
+});
 
 const process = ["Identify the unit", "Submit photos and fault details", "Send the board for evaluation", "Review the repair quotation", "Component-level repair", "Functional testing and return"];
 const industries = ["Manufacturing", "Packaging", "Food processing", "Material handling", "CNC and machining", "Building automation", "Energy and utilities", "Robotics and automation"];
@@ -35,15 +37,45 @@ export default async function Home() {
   const products = await getPublishedProducts();
   const primaryProduct = products.find((product) => product.primaryProduct) || products[0] || fallbackPrimaryProduct;
   const organizationSchema = {
-    "@context": "https://schema.org", "@type": "ProfessionalService", name: siteConfig.name, description: siteConfig.description,
-    url: siteConfig.url, telephone: siteConfig.phone, email: siteConfig.email, areaServed: "United States",
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${siteConfig.url}/#organization`,
+        name: siteConfig.name,
+        alternateName: siteConfig.shortName,
+        description: siteConfig.description,
+        url: siteConfig.url,
+        email: siteConfig.email,
+        areaServed: { "@type": "Country", name: "United States" },
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${siteConfig.url}/#website`,
+        name: siteConfig.name,
+        alternateName: siteConfig.shortName,
+        url: siteConfig.url,
+        inLanguage: "en-US",
+        publisher: { "@id": `${siteConfig.url}/#organization` },
+      },
+      {
+        "@type": "Service",
+        "@id": `${siteConfig.url}/#industrial-electronics-repair`,
+        name: "Industrial Circuit Board Repair",
+        description: siteConfig.description,
+        serviceType: "Component-level industrial electronics diagnostics and repair evaluation",
+        provider: { "@id": `${siteConfig.url}/#organization` },
+        areaServed: { "@type": "Country", name: "United States" },
+        audience: { "@type": "BusinessAudience", audienceType: "Industrial equipment operators and maintenance teams" },
+      },
+    ],
   };
   const faqSchema = { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faqs.map(([question, answer]) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })) };
 
   return (
     <PageShell>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      <JsonLd data={organizationSchema} />
+      <JsonLd data={faqSchema} />
 
       <section className="home-hero dark-section">
         <div className="container home-hero-grid">

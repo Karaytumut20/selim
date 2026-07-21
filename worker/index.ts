@@ -51,7 +51,15 @@ const worker = {
       }, allowedWidths);
     }
 
-    return handler.fetch(request, env, ctx);
+    const response = await handler.fetch(request, env, ctx);
+    const shouldNoIndex = url.pathname === "/admin" || url.pathname.startsWith("/admin/") ||
+      url.pathname.startsWith("/api/") || url.pathname.startsWith("/_vinext/") ||
+      ["/signin-with-chatgpt", "/signout-with-chatgpt", "/callback"].includes(url.pathname);
+    if (!shouldNoIndex) return response;
+
+    const headers = new Headers(response.headers);
+    headers.set("X-Robots-Tag", "noindex, nofollow");
+    return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
   },
 };
 

@@ -25,9 +25,11 @@ export type ProductRow = {
   primary_product: boolean;
   status: ProductStatus;
   sort_order: number;
+  created_at?: string;
+  updated_at?: string;
 };
 
-export type ManagedProduct = Product & { status: ProductStatus; sortOrder: number };
+export type ManagedProduct = Product & { status: ProductStatus; sortOrder: number; createdAt?: string; updatedAt?: string };
 
 export function rowToProduct(row: ProductRow): ManagedProduct {
   return {
@@ -52,6 +54,8 @@ export function rowToProduct(row: ProductRow): ManagedProduct {
     primaryProduct: row.primary_product,
     status: row.status,
     sortOrder: row.sort_order,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 

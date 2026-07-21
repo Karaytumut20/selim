@@ -4,6 +4,13 @@ import { siteConfig } from "../lib/site-config";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const products = await getPublishedProducts();
-  const routes = ["", "/repairs", "/products", "/industries", "/about", "/contact", "/privacy", "/terms"];
-  return [...routes.map((route) => ({ url: `${siteConfig.url}${route}`, changeFrequency: route === "" ? "weekly" as const : "monthly" as const, priority: route === "" ? 1 : .7 })), ...products.map((product) => ({ url: `${siteConfig.url}/products/${product.slug}`, changeFrequency: "monthly" as const, priority: .6 }))];
+  const staticLastModified = new Date("2026-07-22T00:00:00.000Z");
+  const routes = ["", "/repairs", "/products", "/industries", "/about", "/contact"];
+  return [
+    ...routes.map((route) => ({ url: `${siteConfig.url}${route}`, lastModified: staticLastModified })),
+    ...products.map((product) => ({
+      url: `${siteConfig.url}/products/${product.slug}`,
+      lastModified: product.updatedAt ? new Date(product.updatedAt) : staticLastModified,
+    })),
+  ];
 }

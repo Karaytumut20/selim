@@ -43,6 +43,18 @@ Northstar Circuit Works sitesi geliştirme, içerik, erişilebilirlik, responsiv
 - [x] Ürün kartları ve admin önizlemeleri için yerel ve production ortamında doğrudan görsel sunumu merkezileştirildi.
 - [x] Tüm genel sayfalar, tüm ürün detay sayfaları ve admin önizlemesi için rota bazlı smoke testleri eklendi.
 
+## Teknik SEO
+
+- [x] Tüm indekslenebilir sayfalara benzersiz title, description, absolute canonical, hreflang, Open Graph ve X kart metadata'sı eklendi.
+- [x] Ana sayfaya güvenli `Organization`, `WebSite`, `Service` ve görünür içerikle eşleşen FAQ yapılandırılmış verileri eklendi.
+- [x] Katalog için `CollectionPage`/`ItemList`; ürün detayları için `Service` ve `BreadcrumbList` JSON-LD şemaları eklendi.
+- [x] JSON-LD çıktıları içerik kaynaklı script kırılmalarına karşı güvenli serialize ediliyor.
+- [x] `robots.txt`, mutlak URL'li dinamik `sitemap.xml` ve web app manifest tamamlandı.
+- [x] Admin, API, auth ve görsel optimizasyon uçları robots kuralları ve `X-Robots-Tag` ile indeks dışı bırakıldı.
+- [x] Taslak hukuk metinleri indeks ve sitemap dışında tutuldu; 404 sayfasına noindex eklendi.
+- [x] Google ve Bing site doğrulama kodları için üretim ortam değişkeni desteği hazırlandı.
+- [x] Metadata, structured data, robots, sitemap ve private-route noindex davranışlarını doğrulayan otomatik testler eklendi.
+
 ## Admin İçerik Yönetimi
 
 - [x] Media ve Settings menüleri etkin, gezilebilir admin çalışma alanlarına dönüştürüldü.

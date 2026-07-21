@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { ConversionBand, PageHero, PageShell, SectionHeading } from "../../components/page-shell";
+import { JsonLd } from "../../components/json-ld";
+import { breadcrumbJsonLd, pageMetadata } from "../../lib/seo";
 
-export const metadata: Metadata = { title: "Industries We Support", description: "Industrial circuit board repair support for manufacturing, packaging, food processing, CNC, material handling, energy, building automation, and robotics.", alternates: { canonical: "/industries" } };
+export const metadata: Metadata = pageMetadata({ title: "Industries We Support", description: "Industrial circuit board repair support for manufacturing, packaging, food processing, CNC, material handling, energy, building automation, and robotics.", path: "/industries" });
 
 const industries = [
   ["Manufacturing", "Process lines, assembly cells, presses, and auxiliary equipment", "Control PCBs, PLC I/O, HMI, drives, and power supplies", "A board fault can interrupt a sequence, disable safety-dependent movement, or stop a complete cell.", "Control board, I/O, drive, HMI, and power board evaluation"],
@@ -15,10 +17,9 @@ const industries = [
 ];
 
 export default function IndustriesPage() {
-  return <PageShell><PageHero index="04 / INDUSTRIES" eyebrow="Operational environments" title="Board repair in the context of production." intro="We begin with the equipment, duty, environment, and operational impact—not just the component on the bench." aside="Capabilities are qualified per product and application." />
+  return <PageShell><JsonLd data={breadcrumbJsonLd([{ name: "Home", path: "/" }, { name: "Industries", path: "/industries" }])} /><PageHero index="04 / INDUSTRIES" eyebrow="Operational environments" title="Board repair in the context of production." intro="We begin with the equipment, duty, environment, and operational impact—not just the component on the bench." aside="Capabilities are qualified per product and application." />
     <section className="content-section"><div className="container"><SectionHeading eyebrow="Industry index" title="Where a board failure becomes an operational problem." /><div className="industry-detail-list">{industries.map(([name, equipment, modules, impact, service], index) => <article key={name}><div className="industry-title"><span>{String(index + 1).padStart(2, "0")}</span><h2>{name}</h2></div><dl><div><dt>Typical equipment</dt><dd>{equipment}</dd></div><div><dt>Electronic modules</dt><dd>{modules}</dd></div><div><dt>Operational impact</dt><dd>{impact}</dd></div><div><dt>Relevant support</dt><dd>{service}</dd></div></dl></article>)}</div></div></section>
     <section className="content-section cream-section"><div className="container split-content"><SectionHeading eyebrow="A responsible boundary" title="Repair the board when repair is the sound decision." /><div><p className="prose-lead">Not every failure should be solved by replacing components. Safety, board condition, obsolescence, test access, parts integrity, and replacement availability all influence the recommendation.</p><ul className="check-list"><li>Repair feasibility follows inspection</li><li>Work requires customer approval</li><li>Testing procedures vary by product</li><li>Replacement may be more responsible for severely damaged assemblies</li></ul></div></div></section>
     <ConversionBand title="Tell us what the failed board controls." />
   </PageShell>;
 }
-

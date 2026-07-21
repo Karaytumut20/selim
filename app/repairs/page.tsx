@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
 import { AlertTriangle, Box, ClipboardList, FlaskConical, MessageCircle, ScanLine, ShieldCheck, Wrench } from "lucide-react";
 import { ConversionBand, PageHero, PageShell, SectionHeading } from "../../components/page-shell";
+import { JsonLd } from "../../components/json-ld";
 import { categories } from "../../lib/products";
+import { breadcrumbJsonLd, pageMetadata } from "../../lib/seo";
+import { siteConfig } from "../../lib/site-config";
 import { buildGeneralRepairUrl } from "../../lib/whatsapp";
 
-export const metadata: Metadata = {
-  title: "Industrial Electronic Repair Services",
-  description: "Component-level repair evaluation for control boards, PLC electronics, servo drives, HMI panels, power supplies, and CNC control boards.",
-  alternates: { canonical: "/repairs" },
-};
+export const metadata: Metadata = pageMetadata({ title: "Industrial Electronic Repair Services", description: "Component-level repair evaluation for control boards, PLC electronics, servo drives, HMI panels, power supplies, and CNC control boards.", path: "/repairs" });
 
 const symptoms = ["No power", "Intermittent operation", "Communication failure", "Burnt components", "Output failure", "Display failure", "Overheating", "Error codes", "Corrosion", "Damaged connectors", "Failed relays", "Unstable voltage rails"];
 const faq = [
@@ -20,8 +19,16 @@ const faq = [
 ];
 
 export default function RepairsPage() {
+  const serviceSchema = {
+    "@context": "https://schema.org", "@type": "Service", "@id": `${siteConfig.url}/repairs/#service`,
+    name: "Industrial Electronic Repair Services", description: "Component-level repair evaluation for industrial control boards and automation electronics.",
+    url: `${siteConfig.url}/repairs`, serviceType: "Industrial electronics repair evaluation",
+    provider: { "@id": `${siteConfig.url}/#organization`, name: siteConfig.name, url: siteConfig.url },
+    areaServed: { "@type": "Country", name: "United States" },
+  };
   return (
     <PageShell>
+      <JsonLd data={[breadcrumbJsonLd([{ name: "Home", path: "/" }, { name: "Repair Services", path: "/repairs" }]), serviceSchema]} />
       <PageHero index="02 / SERVICES" eyebrow="Industrial electronic repair" title="Repair decisions grounded in inspection." intro="From first photos to controlled testing, every stage is designed to clarify risk, scope, and the most responsible next step." aside="Repair feasibility is determined after inspection." />
 
       <section className="content-section"><div className="container"><SectionHeading eyebrow="Service scope" title="Board-level support across industrial control systems." intro="These categories route your inquiry. Exact capabilities are qualified for the specific assembly after evaluation." /><div className="feature-index">{categories.map((category, index) => <article key={category}><span>0{index + 1}</span><h3>{category}</h3><p>{["Logic control, I/O, communication, relay, analog, and power regulation sections.", "PLC processor, network, backplane, and channel electronics where test access permits.", "Drive logic, feedback, gate control, and power-stage evaluation.", "Boot, display, touch, communication, and power related faults.", "Startup, output regulation, thermal, capacitor, and protection circuit faults.", "Machine interface, axis control, communications, and industrial I/O electronics."][index]}</p></article>)}</div></div></section>
@@ -46,4 +53,3 @@ export default function RepairsPage() {
     </PageShell>
   );
 }
-

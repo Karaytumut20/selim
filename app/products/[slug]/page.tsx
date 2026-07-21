@@ -6,8 +6,10 @@ import { PageShell, SectionHeading } from "../../../components/page-shell";
 import { ProductRepairLink } from "../../../components/product-actions";
 import { ProductGallery } from "../../../components/product-gallery";
 import { ProductCard } from "../../../components/product-card";
+import { JsonLd } from "../../../components/json-ld";
 import { getPublishedProduct, getPublishedProducts, getRelatedProductsFromList } from "../../../lib/catalog";
-import { products } from "../../../lib/products";
+import { products, resolveProductImage } from "../../../lib/products";
+import { absoluteUrl, breadcrumbJsonLd, pageMetadata, truncateMetaDescription } from "../../../lib/seo";
 import { siteConfig } from "../../../lib/site-config";
 
 export function generateStaticParams() { return products.map((product) => ({ slug: product.slug })); }
@@ -17,8 +19,14 @@ export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const product = await getPublishedProduct(slug);
-  if (!product) return {};
-  return { title: `${product.name} Repair`, description: `${product.shortDescription} Request a component-level repair evaluation for ${product.partNumber}.`, alternates: { canonical: `/products/${product.slug}` }, openGraph: { title: `${product.name} Repair`, description: product.shortDescription } };
+  if (!product) return pageMetadata({ title: "Product Not Found", description: "The requested repair catalog record is not available.", path: `/products/${slug}`, noIndex: true });
+  const description = truncateMetaDescription(`${product.shortDescription} Request a component-level repair evaluation for ${product.partNumber}.`);
+  return pageMetadata({
+    title: `${product.name} Repair`,
+    description,
+    path: `/products/${product.slug}`,
+    image: { url: absoluteUrl(resolveProductImage(product.image)), width: 1200, height: 900, alt: `${product.name} industrial circuit board` },
+  });
 }
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -27,14 +35,30 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   if (!product) notFound();
   const catalog = await getPublishedProducts();
   const related = getRelatedProductsFromList(product, catalog);
-  const breadcrumbSchema = { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [
-    { "@type": "ListItem", position: 1, name: "Home", item: siteConfig.url },
-    { "@type": "ListItem", position: 2, name: "Products", item: `${siteConfig.url}/products` },
-    { "@type": "ListItem", position: 3, name: product.name, item: `${siteConfig.url}/products/${product.slug}` },
-  ] };
+  const productUrl = `${siteConfig.url}/products/${product.slug}`;
+  const breadcrumbSchema = breadcrumbJsonLd([
+    { name: "Home", path: "/" },
+    { name: "Products", path: "/products" },
+    { name: product.name, path: `/products/${product.slug}` },
+  ]);
+  const serviceSchema = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "@id": `${productUrl}/#repair-service`,
+    name: `${product.name} Repair Evaluation`,
+    description: product.longDescription,
+    url: productUrl,
+    mainEntityOfPage: { "@type": "WebPage", "@id": productUrl },
+    serviceType: "Industrial circuit board repair evaluation",
+    category: product.category,
+    identifier: product.partNumber,
+    image: product.gallery.map((image) => absoluteUrl(resolveProductImage(image))),
+    provider: { "@id": `${siteConfig.url}/#organization`, name: siteConfig.name, url: siteConfig.url },
+    areaServed: { "@type": "Country", name: "United States" },
+  };
 
   return <PageShell>
-    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+    <JsonLd data={[breadcrumbSchema, serviceSchema]} />
     <section className="product-detail-head"><div className="container"><div className="breadcrumbs"><Link href="/">Home</Link><span><Link href="/products">Products</Link></span><span>{product.partNumber}</span></div><div className="product-detail-grid">
       <ProductGallery name={product.name} gallery={product.gallery} />
       <div className="product-summary"><span className="eyebrow">{product.category}</span><div className="product-part">PART NUMBER / <strong>{product.partNumber}</strong></div><h1>{product.name}</h1><p className="product-family">{product.manufacturerOrFamily}</p><span className={`repair-supported ${product.repairSupported ? "" : "evaluation-badge"}`}><i /> {product.repairSupported ? "Repair Supported" : "Evaluation Required"}</span><p className="product-intro">{product.longDescription}</p><div className="summary-facts"><div><span>Turnaround</span><strong>{product.leadTimeText}</strong></div><div><span>Warranty</span><strong>{product.warrantyText}</strong></div></div><ProductRepairLink product={product} /> <ProductRepairLink product={product} replacement className="replacement-link" /></div>

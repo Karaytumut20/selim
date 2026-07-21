@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { siteConfig } from "../lib/site-config";
+import { defaultSocialImage } from "../lib/seo";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,19 +16,43 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
+  applicationName: siteConfig.name,
   title: {
     default: `${siteConfig.name} | Industrial Circuit Board Repair`,
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
   keywords: ["industrial circuit board repair", "industrial electronic repair", "PLC board repair", "servo drive board repair", "component-level PCB repair"],
-  alternates: { canonical: "/" },
-  openGraph: { title: siteConfig.name, description: siteConfig.description, type: "website", siteName: siteConfig.name, images: [{ url: "/og.png", width: 1200, height: 630, alt: "Northstar Circuit Works industrial circuit board repair" }] },
-  twitter: { card: "summary_large_image", title: siteConfig.name, description: siteConfig.description, images: ["/og.png"] },
+  creator: siteConfig.name,
+  publisher: siteConfig.name,
+  category: "Industrial electronics repair",
+  referrer: "origin-when-cross-origin",
+  formatDetection: { email: false, address: false, telephone: false },
+  alternates: { canonical: siteConfig.url, languages: { "en-US": siteConfig.url, "x-default": siteConfig.url } },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, maxImagePreview: "large", maxSnippet: -1, maxVideoPreview: -1 },
+  },
+  openGraph: { title: siteConfig.name, description: siteConfig.description, type: "website", locale: "en_US", url: siteConfig.url, siteName: siteConfig.name, images: [defaultSocialImage] },
+  twitter: { card: "summary_large_image", title: siteConfig.name, description: siteConfig.description, images: [defaultSocialImage.url] },
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
+    other: process.env.BING_SITE_VERIFICATION ? { "msvalidate.01": process.env.BING_SITE_VERIFICATION } : undefined,
+  },
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
   },
+  manifest: "/manifest.webmanifest",
+};
+
+export const viewport: Viewport = {
+  colorScheme: "light dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#faf9f6" },
+    { media: "(prefers-color-scheme: dark)", color: "#111417" },
+  ],
 };
 
 export default function RootLayout({
