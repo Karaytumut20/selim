@@ -104,6 +104,11 @@ export const productCardImages: Record<string, string> = {
   cnc: "/images/products/category-cnc.jpg",
 };
 
+export function resolveProductImage(image?: string) {
+  if (!image) return productCardImages.control;
+  return productCardImages[image] || image;
+}
+
 export function getProduct(slug: string) {
   return products.find((product) => product.slug === slug);
 }

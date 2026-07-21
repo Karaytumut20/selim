@@ -34,7 +34,7 @@ Northstar Circuit Works sitesi geliştirme, içerik, erişilebilirlik, responsiv
 - [x] Ürün kartlarındaki kod tabanlı placeholder'lar kategori görselleriyle değiştirildi.
 - [x] `/admin` içerik stüdyosu ve ürün ekleme arayüzü oluşturuldu.
 - [x] Admin panelinde görsel önizleme, zorunlu alan doğrulaması, arama ve oturumluk taslak ekleme hazırlandı.
-- [x] Supabase, kalıcı dosya yükleme, authentication ve yayınlama bilinçli olarak Aşama 2'ye bırakıldı.
+- [x] Supabase, kalıcı dosya yükleme, erişim kontrolü ve yayınlama için Aşama 2 kapsamı tanımlandı.
 
 ## Çalışma Zamanı Güvenilirliği
 
@@ -46,7 +46,21 @@ Northstar Circuit Works sitesi geliştirme, içerik, erişilebilirlik, responsiv
 
 - [x] Media ve Settings menüleri etkin, gezilebilir admin çalışma alanlarına dönüştürüldü.
 - [x] Ürün düzenleme, kontrollü silme ve silme onayı eklendi.
-- [x] Ürün değişiklikleri ve admin tercihleri için tarayıcıya özel yerel kalıcılık eklendi.
-- [x] Media alanına çoklu görsel önizleme yükleme ve kaldırma işlevleri eklendi.
-- [x] Orijinal kataloğa geri dönmek için workspace sıfırlama aracı eklendi.
-- [x] Supabase veritabanı, kalıcı medya depolama ve canlı katalog yayını Aşama 2 için ayrılmış durumda.
+- [x] Ürün ekleme, güncelleme, taslak/yayın durumu ve kontrollü kalıcı silme tamamlandı.
+- [x] Media alanına çoklu ve kalıcı görsel yükleme/silme işlevleri eklendi.
+- [x] Ürün değişiklikleri canlı Supabase kataloğuna bağlandı; admin tercihleri cihazda tutuluyor.
+
+## Aşama 2 — Supabase ve Canlı Yayın
+
+- [x] Supabase PostgreSQL `products` şeması ve tekrar çalıştırılabilir migration dosyası oluşturuldu.
+- [x] Row Level Security etkinleştirildi; genel erişim yalnızca `published` ürünleri okuyabiliyor.
+- [x] Ürün mutasyonları ve medya yazma işlemleri yalnızca korumalı sunucu API'lerine bırakıldı.
+- [x] `product-images` Storage bucket'ı 10 MB sınırı ve JPG/PNG/WebP/AVIF türleriyle oluşturuldu.
+- [x] Mevcut 14 ürün ve 6 kategori görseli Supabase'e taşındı.
+- [x] Ana sayfa, katalog, arama, ürün detayları ve sitemap canlı Supabase verisini kullanıyor.
+- [x] Admin panelinde Supabase tabanlı ürün ekleme, düzenleme, yayınlama, taslak alma ve silme tamamlandı.
+- [x] Admin panelinde kalıcı medya listeleme, yükleme ve silme tamamlandı.
+- [x] Üretimde admin erişimi Sites kullanıcı kimliği ve `ADMIN_EMAILS` allowlist'i ile sınırlandı.
+- [x] Yerel geliştirme için git dışında tutulan `.env.local`, kurulum için güvenli `.env.example` hazırlandı.
+- [x] Taslak kaydın genel katalogdan gizlenmesi; yayınlama, güncelleme, silme ve Storage round-trip işlemleri uçtan uca test edildi.
+- [x] ESLint, production build, rota smoke testleri ve üretim bağımlılığı güvenlik denetimi başarıyla tamamlandı.

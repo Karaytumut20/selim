@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Filter, Grid3X3, List, Search, SlidersHorizontal, X } from "lucide-react";
-import { categories, products } from "../lib/products";
+import { categories, products as fallbackProducts, type Product } from "../lib/products";
 import { ProductCard } from "./product-card";
 
-export function CatalogClient() {
+export function CatalogClient({ initialProducts = fallbackProducts }: { initialProducts?: Product[] }) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All categories");
   const [family, setFamily] = useState("All families");
@@ -23,10 +23,10 @@ export function CatalogClient() {
     }
   }, []);
 
-  const families = useMemo(() => Array.from(new Set(products.map((product) => product.manufacturerOrFamily))).sort(), []);
+  const families = useMemo(() => Array.from(new Set(initialProducts.map((product) => product.manufacturerOrFamily))).sort(), [initialProducts]);
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    const result = products.filter((product) => {
+    const result = initialProducts.filter((product) => {
       const matchesQuery = !normalized || [product.name, product.partNumber, product.manufacturerOrFamily, product.category, product.shortDescription].join(" ").toLowerCase().includes(normalized);
       const matchesCategory = category === "All categories" || product.category === category;
       const matchesFamily = family === "All families" || product.manufacturerOrFamily === family;
@@ -34,7 +34,7 @@ export function CatalogClient() {
       return matchesQuery && matchesCategory && matchesFamily && matchesSupport;
     });
     return [...result].sort((a, b) => sort === "Part number" ? a.partNumber.localeCompare(b.partNumber) : sort === "Name A–Z" ? a.name.localeCompare(b.name) : Number(b.featured) - Number(a.featured));
-  }, [query, category, family, support, sort]);
+  }, [initialProducts, query, category, family, support, sort]);
 
   const reset = () => { setQuery(""); setCategory("All categories"); setFamily("All families"); setSupport("All support states"); };
   const filterControls = (

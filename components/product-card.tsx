@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, MessageCircle } from "lucide-react";
-import { productCardImages, type Product } from "../lib/products";
+import { resolveProductImage, type Product } from "../lib/products";
 import { buildProductRepairUrl } from "../lib/whatsapp";
 import { SiteImage } from "./site-image";
 
@@ -9,13 +9,13 @@ export function ProductCard({ product }: { product: Product }) {
     <article className="product-card">
       <Link className="product-card-image" href={`/products/${product.slug}`}>
         <SiteImage
-          src={productCardImages[product.image] || productCardImages.control}
+          src={resolveProductImage(product.image)}
           alt={`${product.name} on an industrial electronics inspection bench`}
           width={1200}
           height={900}
           sizes="(max-width: 760px) 100vw, (max-width: 1080px) 50vw, 33vw"
         />
-        <span className="image-index">NCW / {product.image.toUpperCase()} / {product.partNumber}</span>
+        <span className="image-index">NCW / CATALOG / {product.partNumber}</span>
         <span className={`support-state ${product.repairSupported ? "supported" : "evaluation"}`}>{product.repairSupported ? "Repair supported" : "Evaluation required"}</span>
       </Link>
       <div className="product-card-body">

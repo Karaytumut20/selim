@@ -4,7 +4,9 @@ import { ArrowRight, CheckCircle2, ChevronRight, ClipboardCheck, FileSearch, Gau
 import { BoardVisual } from "../components/board-visual";
 import { ConversionBand, PageShell, SectionHeading } from "../components/page-shell";
 import { ProductCard } from "../components/product-card";
-import { categories, primaryProduct, products } from "../lib/products";
+import { SiteImage } from "../components/site-image";
+import { getPublishedProducts } from "../lib/catalog";
+import { categories, primaryProduct as fallbackPrimaryProduct, resolveProductImage } from "../lib/products";
 import { siteConfig } from "../lib/site-config";
 import { buildGeneralRepairUrl, buildProductRepairUrl } from "../lib/whatsapp";
 
@@ -27,7 +29,11 @@ const faqs = [
   ["Are warranty options available?", "Warranty options may be available and are stated with the confirmed repair scope."],
 ];
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const products = await getPublishedProducts();
+  const primaryProduct = products.find((product) => product.primaryProduct) || products[0] || fallbackPrimaryProduct;
   const organizationSchema = {
     "@context": "https://schema.org", "@type": "ProfessionalService", name: siteConfig.name, description: siteConfig.description,
     url: siteConfig.url, telephone: siteConfig.phone, email: siteConfig.email, areaServed: "United States",
@@ -68,7 +74,7 @@ export default function Home() {
         <div className="container">
           <SectionHeading eyebrow="Primary repair program" title="A direct path from failed board to informed decision." intro="The repair action stays primary. Product identity, symptoms, evaluation scope, and next steps remain clear at every stage." />
           <div className="featured-product-grid">
-            <div className="featured-board"><BoardVisual variant={primaryProduct.image} label={`Technical illustration of ${primaryProduct.name}`} /><span className="inspection-stamp">Inspection<br />Ready</span></div>
+            <div className="featured-board"><SiteImage src={resolveProductImage(primaryProduct.image)} alt={`${primaryProduct.name} industrial electronics product`} width={1200} height={900} /><span className="inspection-stamp">Inspection<br />Ready</span></div>
             <div className="featured-details">
               <div className="feature-id"><span>{primaryProduct.category}</span><strong>PART / {primaryProduct.partNumber}</strong></div>
               <h2>{primaryProduct.name}</h2>
@@ -115,7 +121,7 @@ export default function Home() {
 
       <section className="catalog-preview cream-section content-section">
         <div className="container">
-          <SectionHeading eyebrow="Repair catalog" title="Start with the part number. Continue with the symptoms." intro="These demonstration records show the intended catalog structure and can be replaced centrally as the service inventory is confirmed." />
+          <SectionHeading eyebrow="Repair catalog" title="Start with the part number. Continue with the symptoms." intro="Published Content Studio records appear here automatically as the service catalog develops." />
           <div className="product-grid">{products.filter((product) => product.featured).slice(0, 6).map((product) => <ProductCard key={product.id} product={product} />)}</div>
           <div className="section-end-link"><Link href="/products">View the complete repair catalog <ArrowRight /></Link></div>
         </div>

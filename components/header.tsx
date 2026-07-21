@@ -5,19 +5,29 @@ import Link from "next/link";
 import { ArrowRight, Menu, MessageCircle, Search, X } from "lucide-react";
 import { Brand } from "./brand";
 import { navItems, siteConfig } from "../lib/site-config";
-import { products } from "../lib/products";
+import { products as fallbackProducts, type Product } from "../lib/products";
 import { buildGeneralRepairUrl } from "../lib/whatsapp";
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [catalog, setCatalog] = useState<Product[]>(fallbackProducts);
   const inputRef = useRef<HTMLInputElement>(null);
   const normalized = query.trim().toLowerCase();
-  const results = useMemo(() => normalized ? products.filter((product) =>
+  const results = useMemo(() => normalized ? catalog.filter((product) =>
     [product.name, product.partNumber, product.manufacturerOrFamily, product.category]
       .join(" ").toLowerCase().includes(normalized)
-  ).slice(0, 6) : [], [normalized]);
+  ).slice(0, 6) : [], [catalog, normalized]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/catalog/products", { signal: controller.signal, cache: "no-store" })
+      .then((response) => response.ok ? response.json() : Promise.reject())
+      .then((payload) => { if (Array.isArray(payload.products)) setCatalog(payload.products); })
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = menuOpen || searchOpen ? "hidden" : "";
@@ -63,7 +73,7 @@ export function Header() {
       <div className={`search-layer ${searchOpen ? "is-open" : ""}`} aria-hidden={!searchOpen}>
         <button className="layer-close" onClick={() => setSearchOpen(false)} aria-label="Close search"><X /></button>
         <div className="search-panel" role="dialog" aria-modal="true" aria-label="Product search">
-          <span className="eyebrow">Catalog index / 014 records</span>
+          <span className="eyebrow">Catalog index / {String(catalog.length).padStart(3, "0")} records</span>
           <h2>Find a board by identity.</h2>
           <div className="search-input-wrap">
             <Search />
@@ -96,4 +106,3 @@ export function Header() {
     </>
   );
 }
-

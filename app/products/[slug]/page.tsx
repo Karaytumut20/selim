@@ -6,23 +6,27 @@ import { PageShell, SectionHeading } from "../../../components/page-shell";
 import { ProductRepairLink } from "../../../components/product-actions";
 import { ProductGallery } from "../../../components/product-gallery";
 import { ProductCard } from "../../../components/product-card";
-import { getProduct, getRelatedProducts, products } from "../../../lib/products";
+import { getPublishedProduct, getPublishedProducts, getRelatedProductsFromList } from "../../../lib/catalog";
+import { products } from "../../../lib/products";
 import { siteConfig } from "../../../lib/site-config";
 
 export function generateStaticParams() { return products.map((product) => ({ slug: product.slug })); }
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProduct(slug);
+  const product = await getPublishedProduct(slug);
   if (!product) return {};
   return { title: `${product.name} Repair`, description: `${product.shortDescription} Request a component-level repair evaluation for ${product.partNumber}.`, alternates: { canonical: `/products/${product.slug}` }, openGraph: { title: `${product.name} Repair`, description: product.shortDescription } };
 }
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = getProduct(slug);
+  const product = await getPublishedProduct(slug);
   if (!product) notFound();
-  const related = getRelatedProducts(product);
+  const catalog = await getPublishedProducts();
+  const related = getRelatedProductsFromList(product, catalog);
   const breadcrumbSchema = { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [
     { "@type": "ListItem", position: 1, name: "Home", item: siteConfig.url },
     { "@type": "ListItem", position: 2, name: "Products", item: `${siteConfig.url}/products` },
