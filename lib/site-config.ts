@@ -4,7 +4,7 @@ export const siteConfig = {
   tagline: "Industrial Electronics, Restored With Precision.",
   description:
     "Component-level diagnostics and repair for industrial circuit boards, PLC electronics, drive boards, HMI controls, and automation systems across the United States.",
-  url: "https://northstar-circuit-works.example",
+  url: "https://northstar-circuit-works.umutkaraytu.chatgpt.site",
   phone: "+1 305 555 0147",
   phoneHref: "+13055550147",
   whatsappNumber: "13055550147",
@@ -28,4 +28,3 @@ export const navItems = [
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
 ] as const;
-
