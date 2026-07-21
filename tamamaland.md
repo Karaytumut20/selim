@@ -41,3 +41,12 @@ Northstar Circuit Works sitesi geliştirme, içerik, erişilebilirlik, responsiv
 - [x] Eksik Cloudflare görsel binding'lerinden kaynaklanan yerel vinext ürün görseli çökmesi düzeltildi.
 - [x] Ürün kartları ve admin önizlemeleri için yerel ve production ortamında doğrudan görsel sunumu merkezileştirildi.
 - [x] Tüm genel sayfalar, tüm ürün detay sayfaları ve admin önizlemesi için rota bazlı smoke testleri eklendi.
+
+## Admin İçerik Yönetimi
+
+- [x] Media ve Settings menüleri etkin, gezilebilir admin çalışma alanlarına dönüştürüldü.
+- [x] Ürün düzenleme, kontrollü silme ve silme onayı eklendi.
+- [x] Ürün değişiklikleri ve admin tercihleri için tarayıcıya özel yerel kalıcılık eklendi.
+- [x] Media alanına çoklu görsel önizleme yükleme ve kaldırma işlevleri eklendi.
+- [x] Orijinal kataloğa geri dönmek için workspace sıfırlama aracı eklendi.
+- [x] Supabase veritabanı, kalıcı medya depolama ve canlı katalog yayını Aşama 2 için ayrılmış durumda.
