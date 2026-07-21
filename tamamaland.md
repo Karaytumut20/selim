@@ -23,4 +23,7 @@
 
 ## Son Durum
 
-Northstar Circuit Works sitesi geliştirme, içerik, erişilebilirlik, responsive davranış, SEO, etkileşim ve üretim derlemesi açısından tamamlandı. Yayınlama adımı Sites üzerinden yürütülmektedir.
+Northstar Circuit Works sitesi geliştirme, içerik, erişilebilirlik, responsive davranış, SEO, etkileşim ve üretim derlemesi açısından tamamlandı.
+
+- [x] Private production deployment tamamlandı.
+- [x] Yayın adresi: https://northstar-circuit-works.umutkaraytu.chatgpt.site
