@@ -1,14 +1,21 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, MessageCircle } from "lucide-react";
-import type { Product } from "../lib/products";
+import { productCardImages, type Product } from "../lib/products";
 import { buildProductRepairUrl } from "../lib/whatsapp";
-import { BoardVisual } from "./board-visual";
 
 export function ProductCard({ product }: { product: Product }) {
   return (
     <article className="product-card">
       <Link className="product-card-image" href={`/products/${product.slug}`}>
-        <BoardVisual variant={product.image} label={`Technical illustration of ${product.name}`} compact />
+        <Image
+          src={productCardImages[product.image] || productCardImages.control}
+          alt={`${product.name} on an industrial electronics inspection bench`}
+          width={1200}
+          height={900}
+          sizes="(max-width: 760px) 100vw, (max-width: 1080px) 50vw, 33vw"
+        />
+        <span className="image-index">NCW / {product.image.toUpperCase()} / {product.partNumber}</span>
         <span className={`support-state ${product.repairSupported ? "supported" : "evaluation"}`}>{product.repairSupported ? "Repair supported" : "Evaluation required"}</span>
       </Link>
       <div className="product-card-body">
@@ -23,4 +30,3 @@ export function ProductCard({ product }: { product: Product }) {
     </article>
   );
 }
-

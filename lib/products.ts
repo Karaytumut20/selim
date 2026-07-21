@@ -95,6 +95,15 @@ export const categories = [
 
 export const primaryProduct = products.find((product) => product.primaryProduct)!;
 
+export const productCardImages: Record<string, string> = {
+  control: "/images/products/category-control.jpg",
+  comms: "/images/products/category-plc.jpg",
+  drive: "/images/products/category-servo.jpg",
+  hmi: "/images/products/category-hmi.jpg",
+  power: "/images/products/category-power.jpg",
+  cnc: "/images/products/category-cnc.jpg",
+};
+
 export function getProduct(slug: string) {
   return products.find((product) => product.slug === slug);
 }
@@ -104,4 +113,3 @@ export function getRelatedProducts(product: Product) {
     .map((id) => products.find((candidate) => candidate.id === id))
     .filter((candidate): candidate is Product => Boolean(candidate));
 }
-

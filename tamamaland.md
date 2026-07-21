@@ -27,3 +27,11 @@ Northstar Circuit Works sitesi geliştirme, içerik, erişilebilirlik, responsiv
 
 - [x] Private production deployment tamamlandı.
 - [x] Yayın adresi: https://northstar-circuit-works.umutkaraytu.chatgpt.site
+
+## İkinci Talep — Aşama 1
+
+- [x] Altı ürün kategorisi için özgün bitmap kart görselleri üretildi.
+- [x] Ürün kartlarındaki kod tabanlı placeholder'lar kategori görselleriyle değiştirildi.
+- [x] `/admin` içerik stüdyosu ve ürün ekleme arayüzü oluşturuldu.
+- [x] Admin panelinde görsel önizleme, zorunlu alan doğrulaması, arama ve oturumluk taslak ekleme hazırlandı.
+- [x] Supabase, kalıcı dosya yükleme, authentication ve yayınlama bilinçli olarak Aşama 2'ye bırakıldı.
