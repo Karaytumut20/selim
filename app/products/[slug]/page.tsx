@@ -54,7 +54,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     identifier: product.partNumber,
     image: product.gallery.map((image) => absoluteUrl(resolveProductImage(image))),
     provider: { "@id": `${siteConfig.url}/#organization`, name: siteConfig.name, url: siteConfig.url },
-    areaServed: { "@type": "Country", name: "United States" },
+    areaServed: siteConfig.schemaAreaServed,
   };
 
   return <PageShell>

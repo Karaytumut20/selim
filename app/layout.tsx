@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { RouteTransitionLoader } from "../components/route-transition-loader";
 import { siteConfig } from "../lib/site-config";
 import { defaultSocialImage } from "../lib/seo";
 
@@ -22,7 +23,15 @@ export const metadata: Metadata = {
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
-  keywords: ["industrial circuit board repair", "industrial electronic repair", "PLC board repair", "servo drive board repair", "component-level PCB repair"],
+  keywords: [
+    "industrial circuit board repair",
+    "industrial electronic repair",
+    "Northeast industrial circuit board repair",
+    "mail-in industrial electronics repair",
+    "PLC board repair",
+    "servo drive board repair",
+    "component-level PCB repair",
+  ],
   creator: siteConfig.name,
   publisher: siteConfig.name,
   category: "Industrial electronics repair",
@@ -65,6 +74,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <RouteTransitionLoader />
         {children}
       </body>
     </html>

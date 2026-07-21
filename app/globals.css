@@ -54,8 +54,10 @@ img { max-width: 100%; display: block; }
 .site-loader-wordmark strong { font-size: 13px; letter-spacing: .2em; }
 .site-loader-wordmark small { color: #848a8f; font: 600 7px/1 var(--font-geist-mono); letter-spacing: .22em; }
 .site-loader p { margin: 16px 0 0; color: #92979b; font: 600 8px/1 var(--font-geist-mono); letter-spacing: .16em; text-transform: uppercase; }
+.site-loader-transition { animation: site-loader-fade-in .12s ease-out both; }
 
 @keyframes site-loader-rotate { to { transform: rotate(360deg); } }
+@keyframes site-loader-fade-in { from { opacity: 0; } }
 
 /* Brand and header */
 .brand { display: inline-flex; align-items: center; gap: 11px; flex-shrink: 0; }

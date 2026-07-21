@@ -13,8 +13,8 @@ import { pageMetadata } from "../lib/seo";
 import { buildGeneralRepairUrl, buildProductRepairUrl } from "../lib/whatsapp";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Industrial Circuit Board Repair USA",
-  description: "Component-level industrial electronic repair for control boards, PLC electronics, servo drives, HMI boards, CNC controls, and power supply PCBs.",
+  title: "Industrial Circuit Board Repair in the U.S.",
+  description: "Northeast-focused, component-level industrial electronic repair for control boards, PLC electronics, drives, HMIs, CNC controls, and power supply PCBs.",
   path: "/",
 });
 
@@ -47,7 +47,7 @@ export default async function Home() {
         description: siteConfig.description,
         url: siteConfig.url,
         email: siteConfig.email,
-        areaServed: { "@type": "Country", name: "United States" },
+        areaServed: siteConfig.schemaAreaServed,
       },
       {
         "@type": "WebSite",
@@ -65,7 +65,7 @@ export default async function Home() {
         description: siteConfig.description,
         serviceType: "Component-level industrial electronics diagnostics and repair evaluation",
         provider: { "@id": `${siteConfig.url}/#organization` },
-        areaServed: { "@type": "Country", name: "United States" },
+        areaServed: siteConfig.schemaAreaServed,
         audience: { "@type": "BusinessAudience", audienceType: "Industrial equipment operators and maintenance teams" },
       },
     ],
@@ -80,14 +80,14 @@ export default async function Home() {
       <section className="home-hero dark-section">
         <div className="container home-hero-grid">
           <div className="hero-copy">
-            <span className="eyebrow light">Component-level repair / United States</span>
+            <span className="eyebrow light">Component-level repair / U.S. service</span>
             <h1>Industrial Circuit Boards, <em>Restored</em> to Service.</h1>
             <p>Component-level diagnostics and repair for critical automation electronics—built around clear communication, documented testing, and minimal operational disruption.</p>
             <div className="hero-actions">
               <a className="button button-primary" href={buildGeneralRepairUrl()} target="_blank" rel="noopener noreferrer"><MessageCircle /> Request a Repair</a>
               <Link className="button button-secondary" href="/products"><Search /> Search by Part Number</Link>
             </div>
-            <div className="hero-trust"><span><CheckCircle2 /> Evaluation before repair</span><span><CheckCircle2 /> Approval required</span><span><CheckCircle2 /> Nationwide service</span></div>
+            <div className="hero-trust"><span><CheckCircle2 /> Evaluation before repair</span><span><CheckCircle2 /> Approval required</span><span><CheckCircle2 /> Northeast &amp; nationwide service</span></div>
           </div>
           <div className="hero-machine">
             <BoardVisual variant="control" label="Industrial control circuit board technical composition" />

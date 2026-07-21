@@ -39,6 +39,7 @@ Northstar Circuit Works sitesi geliştirme, içerik, erişilebilirlik, responsiv
 ## Çalışma Zamanı Güvenilirliği
 
 - [x] Marka diline uygun, responsive ve reduced-motion destekli route loading ekranı eklendi.
+- [x] Minimal loading ekranı tüm site içi sayfa geçişlerine bağlandı.
 - [x] Eksik Cloudflare görsel binding'lerinden kaynaklanan yerel vinext ürün görseli çökmesi düzeltildi.
 - [x] Ürün kartları ve admin önizlemeleri için yerel ve production ortamında doğrudan görsel sunumu merkezileştirildi.
 - [x] Tüm genel sayfalar, tüm ürün detay sayfaları ve admin önizlemesi için rota bazlı smoke testleri eklendi.
@@ -54,6 +55,7 @@ Northstar Circuit Works sitesi geliştirme, içerik, erişilebilirlik, responsiv
 - [x] Taslak hukuk metinleri indeks ve sitemap dışında tutuldu; 404 sayfasına noindex eklendi.
 - [x] Google ve Bing site doğrulama kodları için üretim ortam değişkeni desteği hazırlandı.
 - [x] Metadata, structured data, robots, sitemap ve private-route noindex davranışlarını doğrulayan otomatik testler eklendi.
+- [x] Tüm müşteri arayüzü İngilizce olarak doğrulandı; bölgesel ve ülke geneli hizmet sinyalleri şehir adı kullanmadan SEO metadata ve schema alanlarına işlendi.
 
 ## Admin İçerik Yönetimi
 

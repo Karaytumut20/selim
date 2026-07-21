@@ -52,7 +52,7 @@ export function Header() {
         <div className="utility-bar">
           <div className="container utility-inner">
             <span>Industrial Electronic Repair</span>
-            <div><a href={`tel:${siteConfig.phoneHref}`}>{siteConfig.phone}</a><a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a><span>Nationwide Service</span></div>
+            <div><a href={`tel:${siteConfig.phoneHref}`}>{siteConfig.phone}</a><a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a><span>Northeast &amp; Nationwide Service</span></div>
           </div>
         </div>
         <div className="main-nav">

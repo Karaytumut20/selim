@@ -7,7 +7,7 @@ import { breadcrumbJsonLd, pageMetadata } from "../../lib/seo";
 import { siteConfig } from "../../lib/site-config";
 import { buildGeneralRepairUrl } from "../../lib/whatsapp";
 
-export const metadata: Metadata = pageMetadata({ title: "Industrial Electronic Repair Services", description: "Component-level repair evaluation for control boards, PLC electronics, servo drives, HMI panels, power supplies, and CNC control boards.", path: "/repairs" });
+export const metadata: Metadata = pageMetadata({ title: "Industrial Electronic Repair Services", description: "Northeast-focused component-level repair evaluation for control boards, PLC electronics, servo drives, HMI panels, power supplies, and CNC control boards.", path: "/repairs" });
 
 const symptoms = ["No power", "Intermittent operation", "Communication failure", "Burnt components", "Output failure", "Display failure", "Overheating", "Error codes", "Corrosion", "Damaged connectors", "Failed relays", "Unstable voltage rails"];
 const faq = [
@@ -24,7 +24,7 @@ export default function RepairsPage() {
     name: "Industrial Electronic Repair Services", description: "Component-level repair evaluation for industrial control boards and automation electronics.",
     url: `${siteConfig.url}/repairs`, serviceType: "Industrial electronics repair evaluation",
     provider: { "@id": `${siteConfig.url}/#organization`, name: siteConfig.name, url: siteConfig.url },
-    areaServed: { "@type": "Country", name: "United States" },
+    areaServed: siteConfig.schemaAreaServed,
   };
   return (
     <PageShell>

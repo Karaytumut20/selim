@@ -123,3 +123,13 @@ test("structured data, crawler files, and private-route directives are consisten
   const api = await request(worker, "/api/catalog/products");
   assert.match(api.headers.get("x-robots-tag") ?? "", /noindex, nofollow/);
 });
+
+test("the public site uses U.S. English and region-aware service signals", async () => {
+  const worker = await loadWorker();
+  const homeHtml = await (await request(worker, "/")).text();
+
+  assert.match(homeHtml, /<html[^>]+lang="en-US"/i);
+  assert.match(homeHtml, /Northeast-focused/i);
+  assert.match(homeHtml, /"@type":"AdministrativeArea","name":"Northeastern United States"/);
+  assert.match(homeHtml, /"@type":"Country","name":"United States"/);
+});
