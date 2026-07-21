@@ -1,14 +1,14 @@
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowRight, MessageCircle } from "lucide-react";
 import { productCardImages, type Product } from "../lib/products";
 import { buildProductRepairUrl } from "../lib/whatsapp";
+import { SiteImage } from "./site-image";
 
 export function ProductCard({ product }: { product: Product }) {
   return (
     <article className="product-card">
       <Link className="product-card-image" href={`/products/${product.slug}`}>
-        <Image
+        <SiteImage
           src={productCardImages[product.image] || productCardImages.control}
           alt={`${product.name} on an industrial electronics inspection bench`}
           width={1200}

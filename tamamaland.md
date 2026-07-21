@@ -35,3 +35,9 @@ Northstar Circuit Works sitesi geliştirme, içerik, erişilebilirlik, responsiv
 - [x] `/admin` içerik stüdyosu ve ürün ekleme arayüzü oluşturuldu.
 - [x] Admin panelinde görsel önizleme, zorunlu alan doğrulaması, arama ve oturumluk taslak ekleme hazırlandı.
 - [x] Supabase, kalıcı dosya yükleme, authentication ve yayınlama bilinçli olarak Aşama 2'ye bırakıldı.
+
+## Çalışma Zamanı Güvenilirliği
+
+- [x] Eksik Cloudflare görsel binding'lerinden kaynaklanan yerel vinext ürün görseli çökmesi düzeltildi.
+- [x] Ürün kartları ve admin önizlemeleri için yerel ve production ortamında doğrudan görsel sunumu merkezileştirildi.
+- [x] Tüm genel sayfalar, tüm ürün detay sayfaları ve admin önizlemesi için rota bazlı smoke testleri eklendi.

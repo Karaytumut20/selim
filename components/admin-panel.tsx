@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { FormEvent, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Check, ChevronRight, CircleDashed, FileImage, ImagePlus, LayoutGrid, PackagePlus, Search, Settings2, Upload, X } from "lucide-react";
 import { categories, productCardImages, products, type Product } from "../lib/products";
+import { SiteImage } from "./site-image";
 
 type DraftProduct = Pick<Product, "id" | "name" | "partNumber" | "manufacturerOrFamily" | "category" | "repairSupported" | "shortDescription"> & {
   imageUrl: string;
@@ -91,7 +91,7 @@ export function AdminPanel() {
           <div className="admin-table" role="table" aria-label="Product records">
             <div className="admin-table-row admin-table-labels" role="row"><span>Product</span><span>Identity</span><span>Category</span><span>Status</span><span /></div>
             {visibleItems.map((item) => <div className="admin-table-row" role="row" key={item.id}>
-              <div className="admin-product-cell"><Image src={item.imageUrl} alt="" width={88} height={66} unoptimized={item.imageUrl.startsWith("blob:")} /><div><strong>{item.name}</strong><small>{item.shortDescription}</small></div></div>
+              <div className="admin-product-cell"><SiteImage src={item.imageUrl} alt="" width={88} height={66} /><div><strong>{item.name}</strong><small>{item.shortDescription}</small></div></div>
               <div><strong>{item.partNumber}</strong><small>{item.manufacturerOrFamily}</small></div>
               <span>{item.category}</span>
               <span className={`admin-record-status ${item.status === "Draft" ? "draft" : ""}`}>{item.status}</span>
@@ -106,7 +106,7 @@ export function AdminPanel() {
         <aside className="admin-editor" role="dialog" aria-modal="true" aria-label="New product editor">
           <header><div><span>New catalog record</span><h2>Add a product draft</h2></div><button onClick={() => setEditorOpen(false)} aria-label="Close product editor"><X /></button></header>
           <form onSubmit={saveDraft}>
-            <label className="admin-image-upload"><input ref={fileRef} type="file" accept="image/*" onChange={(event) => chooseImage(event.target.files?.[0])} />{preview ? <Image src={preview} alt="Selected product preview" fill unoptimized /> : <><ImagePlus /><strong>Add product image</strong><span>JPG, PNG, or WebP · preview only</span></>}<button type="button" onClick={() => fileRef.current?.click()}><Upload /> Select image</button></label>
+            <label className="admin-image-upload"><input ref={fileRef} type="file" accept="image/*" onChange={(event) => chooseImage(event.target.files?.[0])} />{preview ? <SiteImage src={preview} alt="Selected product preview" fill /> : <><ImagePlus /><strong>Add product image</strong><span>JPG, PNG, or WebP · preview only</span></>}<button type="button" onClick={() => fileRef.current?.click()}><Upload /> Select image</button></label>
             <div className="admin-form-grid"><label><span>Product name *</span><input name="name" required placeholder="e.g. AXC-910 Control Board" /></label><label><span>Part number *</span><input name="partNumber" required placeholder="e.g. AXC-910" /></label><label><span>Product family</span><input name="family" placeholder="e.g. A Series" /></label><label><span>Category</span><select name="category">{categories.map((category) => <option key={category}>{category}</option>)}</select></label><label className="admin-form-wide"><span>Short description</span><textarea name="description" rows={3} placeholder="Concise product and repair scope description…" /></label><label className="admin-check"><input name="repairSupported" type="checkbox" defaultChecked /><span>Repair evaluation supported</span></label></div>
             <div className="admin-editor-note"><CircleDashed /><p><strong>Phase 1 behavior:</strong> Save adds a temporary draft to this page only. Supabase storage, authentication, and publishing will be connected in Phase 2.</p></div>
             <footer><button type="button" onClick={() => setEditorOpen(false)}>Cancel</button><button className="admin-save" type="submit"><Check /> Save local draft</button></footer>
