@@ -41,7 +41,7 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
-    googleBot: { index: true, follow: true, maxImagePreview: "large", maxSnippet: -1, maxVideoPreview: -1 },
+    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 },
   },
   openGraph: { title: siteConfig.name, description: siteConfig.description, type: "website", locale: "en_US", url: siteConfig.url, siteName: siteConfig.name, images: [defaultSocialImage] },
   twitter: { card: "summary_large_image", title: siteConfig.name, description: siteConfig.description, images: [defaultSocialImage.url] },

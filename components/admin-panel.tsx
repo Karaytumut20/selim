@@ -19,7 +19,7 @@ const SETTINGS_STORAGE_KEY = "global-white-star-admin-settings-v2";
 const defaultSettings: WorkspaceSettings = { defaultRepairSupported: true, compactRows: false };
 
 async function responseJson<T>(response: Response): Promise<T> {
-  const body = await response.json().catch(() => ({}));
+  const body = (await response.json().catch(() => ({}))) as { error?: string };
   if (!response.ok) throw new Error(body.error || "The request could not be completed.");
   return body as T;
 }

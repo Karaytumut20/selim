@@ -24,7 +24,7 @@ export function Header() {
     const controller = new AbortController();
     fetch("/api/catalog/products", { signal: controller.signal, cache: "no-store" })
       .then((response) => response.ok ? response.json() : Promise.reject())
-      .then((payload) => { if (Array.isArray(payload.products)) setCatalog(payload.products); })
+      .then((payload: any) => { if (Array.isArray(payload?.products)) setCatalog(payload.products); })
       .catch(() => undefined);
     return () => controller.abort();
   }, []);
