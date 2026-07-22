@@ -77,6 +77,7 @@ img { max-width: 100%; display: block; }
 .brand-light .brand-mark { border-color: white; color: white; }
 .brand-light .brand-type small { color: #aab1b7; }
 .site-header { position: sticky; top: 0; z-index: 100; background: var(--paper); border-bottom: 1px solid var(--line); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); transform: translateZ(0); -webkit-transform: translateZ(0); }
+.site-header::before { content: ""; position: absolute; bottom: 100%; left: -100vw; right: -100vw; height: 600px; background: var(--paper); pointer-events: none; }
 .utility-bar { height: 30px; background: var(--navy); color: #d9dde0; font: 500 9px/30px var(--font-geist-mono), monospace; letter-spacing: .11em; text-transform: uppercase; }
 .utility-inner { display: flex; justify-content: space-between; }
 .utility-inner > div { display: flex; gap: 24px; }
