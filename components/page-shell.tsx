@@ -6,12 +6,12 @@ import { buildGeneralRepairUrl } from "../lib/whatsapp";
 
 export function PageShell({ children }: { children: React.ReactNode }) {
   return (
-    <>
+    <div className="site-shell">
       <Header />
       <main>{children}</main>
       <Footer />
       <a className="floating-whatsapp" href={buildGeneralRepairUrl()} target="_blank" rel="noopener noreferrer" aria-label="Request a repair on WhatsApp"><MessageCircle /><span>Repair request</span></a>
-    </>
+    </div>
   );
 }
 

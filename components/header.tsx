@@ -7,6 +7,7 @@ import { Brand } from "./brand";
 import { navItems, siteConfig } from "../lib/site-config";
 import { products as fallbackProducts, type Product } from "../lib/products";
 import { buildGeneralRepairUrl } from "../lib/whatsapp";
+import { useBodyScrollLock } from "../lib/use-body-scroll-lock";
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -20,6 +21,8 @@ export function Header() {
       .join(" ").toLowerCase().includes(normalized)
   ).slice(0, 6) : [], [catalog, normalized]);
 
+  useBodyScrollLock(menuOpen || searchOpen);
+
   useEffect(() => {
     const controller = new AbortController();
     fetch("/api/catalog/products", { signal: controller.signal, cache: "no-store" })
@@ -30,10 +33,8 @@ export function Header() {
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = menuOpen || searchOpen ? "hidden" : "";
     if (searchOpen) setTimeout(() => inputRef.current?.focus(), 50);
-    return () => { document.body.style.overflow = ""; };
-  }, [menuOpen, searchOpen]);
+  }, [searchOpen]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {

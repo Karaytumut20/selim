@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Filter, Grid3X3, List, Search, SlidersHorizontal, X } from "lucide-react";
 import { categories, products as fallbackProducts, type Product } from "../lib/products";
 import { ProductCard } from "./product-card";
+import { useBodyScrollLock } from "../lib/use-body-scroll-lock";
 
 export function CatalogClient({ initialProducts = fallbackProducts }: { initialProducts?: Product[] }) {
   const [query, setQuery] = useState("");
@@ -13,6 +14,17 @@ export function CatalogClient({ initialProducts = fallbackProducts }: { initialP
   const [sort, setSort] = useState("Featured first");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [drawer, setDrawer] = useState(false);
+
+  useBodyScrollLock(drawer);
+
+  useEffect(() => {
+    if (!drawer) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setDrawer(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [drawer]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
