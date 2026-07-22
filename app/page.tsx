@@ -121,11 +121,11 @@ export default async function Home() {
 
       <section className="repair-categories cream-section content-section">
         <div className="container">
-          <SectionHeading eyebrow="Repair disciplines" title="Six board classes. One rigorous evaluation standard." intro="Category guides help route the inquiry; final repair feasibility is determined after inspection." />
+          <SectionHeading eyebrow="Repair disciplines" title="Five board classes. One rigorous evaluation standard." intro="Category guides help route the inquiry; final repair feasibility is determined after inspection." />
           <div className="category-editorial">
             {categories.map((category, index) => (
               <Link href={`/products?category=${encodeURIComponent(category)}`} key={category} className={index === 0 ? "category-primary" : ""}>
-                <span>0{index + 1}</span><h3>{category}</h3><p>{["Machine logic, relay outputs, analog inputs, and field interfaces.", "PLC communications, CPUs, remote I/O, and channel electronics.", "Motion control, feedback, gate drive, and power-stage electronics.", "Display, touch, logic, boot, and operator interface circuits.", "Power conversion, regulation, protection, and distribution boards.", "Axis control, machine interface, and CNC system electronics."][index]}</p><ChevronRight />
+                <span>0{index + 1}</span><h3>{category}</h3><p>{["Machine logic, relay outputs, analog inputs, and field interfaces.", "PLC communications, CPUs, remote I/O, and channel electronics.", "Motion control, feedback, gate drive, and power-stage electronics.", "Display, touch, logic, boot, and operator interface circuits.", "Power conversion, regulation, protection, and distribution boards."][index]}</p><ChevronRight />
               </Link>
             ))}
           </div>
