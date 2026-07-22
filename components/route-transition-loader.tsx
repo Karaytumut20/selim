@@ -1,46 +1,69 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import { SiteLoader } from "./site-loader";
 
-const minimumVisibleTime = 280;
-const maximumVisibleTime = 10000;
+const MINIMUM_VISIBLE_MS = 240;
+const SAFETY_TIMEOUT_MS = 8000;
 
-export function RouteTransitionLoader() {
+function RouteTransitionLoaderInner() {
   const pathname = usePathname();
-  const previousPathname = useRef(pathname);
+  const searchParams = useSearchParams();
+  const currentPath = `${pathname}?${searchParams.toString()}`;
+  const previousPath = useRef(currentPath);
+
   const startedAt = useRef(0);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const safetyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const [visible, setVisible] = useState(false);
+  const [leaving, setLeaving] = useState(false);
 
   const hide = useCallback(() => {
     if (hideTimer.current) clearTimeout(hideTimer.current);
     if (safetyTimer.current) clearTimeout(safetyTimer.current);
+    if (leaveTimer.current) clearTimeout(leaveTimer.current);
+
+    // 1. Force scroll to top while loader screen covers the browser viewport
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
 
     const elapsed = Date.now() - startedAt.current;
+    const remainingTime = Math.max(0, MINIMUM_VISIBLE_MS - elapsed);
+
     hideTimer.current = setTimeout(() => {
-      setVisible(false);
-      document.documentElement.removeAttribute("aria-busy");
-    }, Math.max(0, minimumVisibleTime - elapsed));
+      // 2. Trigger smooth fade-out and scale-up exit animation
+      setLeaving(true);
+
+      leaveTimer.current = setTimeout(() => {
+        setVisible(false);
+        setLeaving(false);
+        document.documentElement.removeAttribute("aria-busy");
+      }, 220);
+    }, remainingTime);
   }, []);
 
   const show = useCallback(() => {
     if (hideTimer.current) clearTimeout(hideTimer.current);
     if (safetyTimer.current) clearTimeout(safetyTimer.current);
+    if (leaveTimer.current) clearTimeout(leaveTimer.current);
 
     startedAt.current = Date.now();
+    setLeaving(false);
     setVisible(true);
     document.documentElement.setAttribute("aria-busy", "true");
-    safetyTimer.current = setTimeout(hide, maximumVisibleTime);
+
+    safetyTimer.current = setTimeout(hide, SAFETY_TIMEOUT_MS);
   }, [hide]);
 
   useEffect(() => {
-    if (previousPathname.current === pathname) return;
-    previousPathname.current = pathname;
+    if (previousPath.current === currentPath) return;
+    previousPath.current = currentPath;
     hide();
-  }, [hide, pathname]);
+  }, [currentPath, hide]);
 
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
@@ -63,8 +86,10 @@ export function RouteTransitionLoader() {
 
       const nextUrl = new URL(anchor.href, window.location.href);
       const currentUrl = new URL(window.location.href);
+
       if (nextUrl.origin !== currentUrl.origin) return;
-      if (nextUrl.pathname === currentUrl.pathname) return;
+      // Skip if clicking the exact same URL anchor hash on current page
+      if (nextUrl.pathname === currentUrl.pathname && nextUrl.search === currentUrl.search) return;
 
       show();
     };
@@ -77,9 +102,18 @@ export function RouteTransitionLoader() {
       window.removeEventListener("popstate", show);
       if (hideTimer.current) clearTimeout(hideTimer.current);
       if (safetyTimer.current) clearTimeout(safetyTimer.current);
+      if (leaveTimer.current) clearTimeout(leaveTimer.current);
       document.documentElement.removeAttribute("aria-busy");
     };
   }, [show]);
 
-  return visible ? <SiteLoader transition /> : null;
+  return visible ? <SiteLoader transition leaving={leaving} /> : null;
+}
+
+export function RouteTransitionLoader() {
+  return (
+    <Suspense fallback={null}>
+      <RouteTransitionLoaderInner />
+    </Suspense>
+  );
 }
