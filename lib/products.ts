@@ -30,7 +30,7 @@ export const products: Product[] = [
     manufacturerOrFamily: "A Series",
     category: "Industrial Control PCB",
     shortDescription: "Multi-zone machine control board supported for inspection and component-level repair evaluation.",
-    longDescription: "The temporary flagship board in the Northstar catalog. Evaluation can cover power regulation, field I/O, communications, damaged traces, connectors, and board-level control circuits where test access and documentation permit.",
+    longDescription: "The temporary flagship board in the Global White Star catalog. Evaluation can cover power regulation, field I/O, communications, damaged traces, connectors, and board-level control circuits where test access and documentation permit.",
     repairSupported: true,
     typicalFaults: ["No power", "Intermittent operation", "Communication failure", "Burnt components"],
     repairCapabilities: ["Power rail analysis", "Trace and pad repair", "Connector replacement", "Controlled functional testing"],

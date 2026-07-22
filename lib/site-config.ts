@@ -1,14 +1,14 @@
 export const siteConfig = {
-  name: "Northstar Circuit Works",
-  shortName: "Northstar",
+  name: "Global White Star LLC",
+  shortName: "Global White Star",
   tagline: "Industrial Electronics, Restored With Precision.",
   description:
     "Northeast-focused industrial circuit board diagnostics and component-level repair for PLCs, drives, HMIs, and automation electronics nationwide.",
-  url: "https://northstar-circuit-works.umutkaraytu.chatgpt.site",
+  url: "https://global-white-star-llc.umutkaraytu.chatgpt.site",
   phone: "+1 305 555 0147",
   phoneHref: "+13055550147",
   whatsappNumber: "13055550147",
-  email: "service@northstarcircuit.com",
+  email: "service@globalwhitestar.com",
   address: "Service center address available with shipping instructions",
   serviceArea: "Northeast-focused service with nationwide shipping support",
   hours: "Service hours confirmed when your request is received",

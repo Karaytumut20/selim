@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Content Studio",
-  description: "Northstar Circuit Works internal product content workspace.",
+  description: "Global White Star LLC internal product content workspace.",
   alternates: { canonical: "/admin" },
   robots: { index: false, follow: false, nocache: true },
 };

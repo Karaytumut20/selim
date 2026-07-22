@@ -6,7 +6,7 @@
 - [x] Değiştirilebilir 14 ürünlük demo veri modeli oluşturuldu.
 - [x] Merkezi ve URL-encoded WhatsApp yardımcı fonksiyonları oluşturuldu.
 - [x] Premium global header, mobil tam ekran menü, arama katmanı ve footer oluşturuldu.
-- [x] Özgün kod tabanlı Northstar logo/wordmark ve PCB görsel sistemi hazırlandı.
+- [x] Özgün kod tabanlı Global White Star logo/wordmark ve PCB görsel sistemi hazırlandı.
 - [x] Ana sayfanın tüm 12 içerik bölümü uygulandı.
 - [x] Repair Services, Industries ve About sayfaları tamamlandı.
 - [x] Privacy Policy ve Terms of Service için yayın öncesi hukuk incelemesi notlu taslak sayfalar oluşturuldu.
@@ -23,10 +23,10 @@
 
 ## Son Durum
 
-Northstar Circuit Works sitesi geliştirme, içerik, erişilebilirlik, responsive davranış, SEO, etkileşim ve üretim derlemesi açısından tamamlandı.
+Global White Star LLC sitesi geliştirme, içerik, erişilebilirlik, responsive davranış, SEO, etkileşim ve üretim derlemesi açısından tamamlandı.
 
 - [x] Private production deployment tamamlandı.
-- [x] Yayın adresi: https://northstar-circuit-works.umutkaraytu.chatgpt.site
+- [x] Yayın adresi: https://global-white-star-llc.umutkaraytu.chatgpt.site
 
 ## İkinci Talep — Aşama 1
 

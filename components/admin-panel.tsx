@@ -15,7 +15,7 @@ type AdminTab = "products" | "media" | "settings";
 type MediaItem = { id: string; name: string; path: string; imageUrl: string };
 type WorkspaceSettings = { defaultRepairSupported: boolean; compactRows: boolean };
 
-const SETTINGS_STORAGE_KEY = "northstar-admin-settings-v2";
+const SETTINGS_STORAGE_KEY = "global-white-star-admin-settings-v2";
 const defaultSettings: WorkspaceSettings = { defaultRepairSupported: true, compactRows: false };
 
 async function responseJson<T>(response: Response): Promise<T> {
@@ -221,7 +221,7 @@ export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: stri
 
   return <main className="admin-shell">
     <aside className="admin-rail">
-      <Link className="admin-brand" href="/"><span>NW</span><div><strong>NORTHSTAR</strong><small>CONTENT STUDIO</small></div></Link>
+      <Link className="admin-brand" href="/"><span>GWS</span><div><strong>GLOBAL WHITE STAR</strong><small>CONTENT STUDIO</small></div></Link>
       <nav aria-label="Admin navigation">
         <button type="button" className={activeTab === "products" ? "active" : ""} onClick={() => switchTab("products")}><LayoutGrid /> Products <span>{items.length}</span></button>
         <button type="button" className={activeTab === "media" ? "active" : ""} onClick={() => switchTab("media")}><FileImage /> Media <span>{mediaItems.length}</span></button>
