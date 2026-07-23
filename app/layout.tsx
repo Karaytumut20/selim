@@ -72,6 +72,8 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <div className="safari-chrome-tint safari-chrome-tint-top" aria-hidden="true" />
+        <div className="safari-chrome-tint safari-chrome-tint-bottom" aria-hidden="true" />
         <RouteTransitionLoader />
         {children}
       </body>

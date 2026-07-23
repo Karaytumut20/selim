@@ -133,3 +133,21 @@ test("the public site uses U.S. English and region-aware service signals", async
   assert.match(homeHtml, /"@type":"AdministrativeArea","name":"Northeastern United States"/);
   assert.match(homeHtml, /"@type":"Country","name":"United States"/);
 });
+
+test("mobile Safari chrome receives a solid white fallback", async () => {
+  const worker = await loadWorker();
+  const homeHtml = await (await request(worker, "/")).text();
+
+  const viewportContent =
+    homeHtml.match(/<meta name="viewport" content="([^"]+)"/i)?.[1] ?? "";
+  assert.match(viewportContent, /width=device-width/i);
+  assert.doesNotMatch(viewportContent, /viewport-fit=cover/i);
+  assert.match(homeHtml, /<meta name="theme-color" content="#ffffff"/i);
+  assert.match(homeHtml, /class="safari-chrome-tint safari-chrome-tint-top"/);
+  assert.match(homeHtml, /class="safari-chrome-tint safari-chrome-tint-bottom"/);
+
+  const manifest = await request(worker, "/manifest.webmanifest");
+  const manifestJson = await manifest.json();
+  assert.equal(manifestJson.background_color, "#ffffff");
+  assert.equal(manifestJson.theme_color, "#ffffff");
+});
