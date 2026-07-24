@@ -117,3 +117,46 @@ export function getRelatedProducts(product: Product) {
     .map((id) => products.find((candidate) => candidate.id === id))
     .filter((candidate): candidate is Product => Boolean(candidate));
 }
+
+export function getCommerceDescription(product: Product) {
+  const copy: Record<string, string> = {
+    "Industrial Control PCB": "A professional industrial control product for automation, machine, and panel applications.",
+    "Industrial Control Boards": "A reliable control product for machine, panel, and industrial automation applications.",
+    "PLC and I/O Boards": "An industrial communication and I/O product for connected control systems.",
+    "Servo and Drive Boards": "A motion-control product for drive, feedback, and automation applications.",
+    "HMI and Operator Panels": "An operator-interface product for clear machine monitoring and control.",
+    "Power Supply Boards": "A regulated industrial power product for control and distribution applications.",
+  };
+  return copy[product.category] || `A professional product from the ${product.manufacturerOrFamily} family, available through direct order support.`;
+}
+
+export function getProductHighlights(product: Product) {
+  return [
+    `Product code: ${product.partNumber}`,
+    `${product.manufacturerOrFamily} product family`,
+    `Categorized under ${product.category}`,
+    product.repairSupported ? "Available for order inquiry" : "Availability confirmed on request",
+  ];
+}
+
+export function getProductApplications(product: Product) {
+  const applications: Record<string, string[]> = {
+    "Industrial Control PCB": ["Machine control systems", "Automation panels", "Production equipment"],
+    "Industrial Control Boards": ["Machine control systems", "Automation panels", "Industrial equipment"],
+    "PLC and I/O Boards": ["PLC systems", "Distributed I/O", "Industrial communications"],
+    "Servo and Drive Boards": ["Motion systems", "Drive applications", "Positioning equipment"],
+    "HMI and Operator Panels": ["Operator stations", "Machine interfaces", "Production monitoring"],
+    "Power Supply Boards": ["Control cabinets", "Regulated power systems", "Industrial equipment"],
+  };
+  return applications[product.category] || ["Business operations", "Industrial applications", "Technical installations"];
+}
+
+export function getCommerceSpecifications(product: Product) {
+  return {
+    "Product code": product.partNumber,
+    "Product family": product.manufacturerOrFamily,
+    Category: product.category,
+    Availability: product.repairSupported ? "Available for order inquiry" : "Confirmed on request",
+    "Order method": "Direct WhatsApp order",
+  };
+}

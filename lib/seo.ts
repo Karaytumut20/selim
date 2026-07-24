@@ -5,7 +5,7 @@ export const defaultSocialImage = {
   url: `${siteConfig.url}/og.png`,
   width: 1200,
   height: 630,
-  alt: `${siteConfig.name} industrial circuit board repair`,
+  alt: `${siteConfig.name} business and industrial product catalog`,
 };
 
 export function absoluteUrl(path = "/") {

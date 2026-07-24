@@ -6,7 +6,7 @@ import { ArrowRight, Menu, MessageCircle, Search, X } from "lucide-react";
 import { Brand } from "./brand";
 import { navItems, siteConfig } from "../lib/site-config";
 import { products as fallbackProducts, type Product } from "../lib/products";
-import { buildGeneralRepairUrl } from "../lib/whatsapp";
+import { buildGeneralOrderUrl } from "../lib/whatsapp";
 import { useBodyScrollLock } from "../lib/use-body-scroll-lock";
 
 export function Header() {
@@ -52,8 +52,8 @@ export function Header() {
       <header className="site-header">
         <div className="utility-bar">
           <div className="container utility-inner">
-            <span>Industrial Electronic Repair</span>
-            <div><a href={`tel:${siteConfig.phoneHref}`}>{siteConfig.phone}</a><a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a><span>Northeast &amp; Nationwide Service</span></div>
+            <span>Business &amp; Industrial Supply</span>
+            <div><a href={`tel:${siteConfig.phoneHref}`}>{siteConfig.phone}</a><a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a><span>Direct WhatsApp Ordering</span></div>
           </div>
         </div>
         <div className="main-nav">
@@ -64,7 +64,7 @@ export function Header() {
             </nav>
             <div className="nav-actions">
               <button className="search-trigger" onClick={() => setSearchOpen(true)} aria-label="Search products"><Search size={20} /><span>Search</span><kbd>⌘K</kbd></button>
-              <a className="button button-primary header-cta" href={buildGeneralRepairUrl()} target="_blank" rel="noopener noreferrer"><MessageCircle size={18} /> Request a Repair</a>
+              <a className="button button-primary header-cta" href={buildGeneralOrderUrl()} target="_blank" rel="noopener noreferrer"><MessageCircle size={18} /> Order on WhatsApp</a>
               <button className="mobile-menu-trigger" onClick={() => setMenuOpen(true)} aria-label="Open menu"><Menu /></button>
             </div>
           </div>
@@ -75,14 +75,14 @@ export function Header() {
         <button className="layer-close" onClick={() => setSearchOpen(false)} aria-label="Close search"><X /></button>
         <div className="search-panel" role="dialog" aria-modal="true" aria-label="Product search">
           <span className="eyebrow">Catalog index / {String(catalog.length).padStart(3, "0")} records</span>
-          <h2>Find a board by identity.</h2>
+          <h2>Find the right product.</h2>
           <div className="search-input-wrap">
             <Search />
-            <input ref={inputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search a manufacturer, board type, or part number…" aria-label="Search catalog" />
+            <input ref={inputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search a product, family, category, or code…" aria-label="Search catalog" />
           </div>
           <div className="search-results" aria-live="polite">
-            {!normalized && <p className="search-hint">Try “AXC-900”, “servo”, “PLC”, or “power supply”.</p>}
-            {normalized && results.length === 0 && <div className="search-empty"><strong>No exact catalog match.</strong><p>You can still request an evaluation without a part number.</p><Link href="/contact" onClick={() => setSearchOpen(false)}>Start a repair request <ArrowRight size={16} /></Link></div>}
+            {!normalized && <p className="search-hint">Try a product code, family, category, or product name.</p>}
+            {normalized && results.length === 0 && <div className="search-empty"><strong>No exact catalog match.</strong><p>Our sales team can help source an alternative.</p><Link href="/contact" onClick={() => setSearchOpen(false)}>Ask the sales team <ArrowRight size={16} /></Link></div>}
             {results.map((product) => (
               <Link className="search-result" key={product.id} href={`/products/${product.slug}`} onClick={() => setSearchOpen(false)}>
                 <span>{product.partNumber}</span><div><strong>{product.name}</strong><small>{product.category}</small></div><ArrowRight />
@@ -100,7 +100,7 @@ export function Header() {
         </nav>
         <div className="mobile-menu-actions">
           <button onClick={() => { setMenuOpen(false); setSearchOpen(true); }}><Search /> Search the catalog</button>
-          <a href={buildGeneralRepairUrl()} target="_blank" rel="noopener noreferrer"><MessageCircle /> Request a Repair</a>
+          <a href={buildGeneralOrderUrl()} target="_blank" rel="noopener noreferrer"><MessageCircle /> Order on WhatsApp</a>
           <p>{siteConfig.phone}<br />{siteConfig.email}</p>
         </div>
       </div>

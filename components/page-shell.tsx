@@ -2,7 +2,7 @@ import { Footer } from "./footer";
 import { Header } from "./header";
 import { MessageCircle } from "lucide-react";
 import Link from "next/link";
-import { buildGeneralRepairUrl } from "../lib/whatsapp";
+import { buildGeneralOrderUrl } from "../lib/whatsapp";
 
 export function PageShell({ children }: { children: React.ReactNode }) {
   return (
@@ -10,7 +10,7 @@ export function PageShell({ children }: { children: React.ReactNode }) {
       <Header />
       <main>{children}</main>
       <Footer />
-      <a className="floating-whatsapp" href={buildGeneralRepairUrl()} target="_blank" rel="noopener noreferrer" aria-label="Request a repair on WhatsApp"><MessageCircle /><span>Repair request</span></a>
+      <a className="floating-whatsapp" href={buildGeneralOrderUrl()} target="_blank" rel="noopener noreferrer" aria-label="Contact sales on WhatsApp"><MessageCircle /><span>Order on WhatsApp</span></a>
     </div>
   );
 }
@@ -35,14 +35,14 @@ export function SectionHeading({ eyebrow, title, intro, light = false }: { eyebr
   );
 }
 
-export function ConversionBand({ title = "Have a board holding up production?" }: { title?: string }) {
+export function ConversionBand({ title = "Ready to order or need product advice?" }: { title?: string }) {
   return (
     <section className="conversion-band">
       <div className="container conversion-grid">
-        <span className="eyebrow light">Repair desk / nationwide</span>
+        <span className="eyebrow light">Direct sales / nationwide</span>
         <h2>{title}</h2>
-        <p>Share the board identity, photos, and symptoms. We’ll outline the next step without creating an account.</p>
-        <div><a className="button button-light" href={buildGeneralRepairUrl()} target="_blank" rel="noopener noreferrer"><MessageCircle /> Start a WhatsApp Repair Request</a><Link className="text-link-light" href="/products">Search Product Catalog →</Link></div>
+        <p>Send the product code and quantity. We’ll confirm current price, availability, and delivery details directly.</p>
+        <div><a className="button button-light" href={buildGeneralOrderUrl()} target="_blank" rel="noopener noreferrer"><MessageCircle /> Start a WhatsApp Order</a><Link className="text-link-light" href="/products">Browse Product Catalog →</Link></div>
       </div>
     </section>
   );

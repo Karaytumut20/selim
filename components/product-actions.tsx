@@ -2,8 +2,10 @@
 
 import { MessageCircle } from "lucide-react";
 import type { Product } from "../lib/products";
-import { buildProductRepairUrl } from "../lib/whatsapp";
+import { buildProductOrderUrl } from "../lib/whatsapp";
 
-export function ProductRepairLink({ product, className = "button button-primary", replacement = false }: { product: Product; className?: string; replacement?: boolean }) {
-  return <a className={className} href={buildProductRepairUrl(product)} onClick={(event) => { event.currentTarget.href = buildProductRepairUrl(product, window.location.href); }} target="_blank" rel="noopener noreferrer" aria-label={`${replacement ? "Ask about replacement availability for" : "Request repair on WhatsApp for"} ${product.name}`}><MessageCircle /> {replacement ? "Ask About Replacement Availability" : "Request Repair on WhatsApp"}</a>;
+export function ProductOrderLink({ product, className = "button button-primary", compact = false }: { product: Product; className?: string; compact?: boolean }) {
+  return <a className={className} href={buildProductOrderUrl(product)} onClick={(event) => { event.currentTarget.href = buildProductOrderUrl(product, window.location.href); }} target="_blank" rel="noopener noreferrer" aria-label={`Buy ${product.name} through WhatsApp`}><MessageCircle /> {compact ? "Buy Now" : "Buy via WhatsApp"}</a>;
 }
+
+export const ProductRepairLink = ProductOrderLink;

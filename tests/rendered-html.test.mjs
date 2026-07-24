@@ -101,7 +101,7 @@ test("structured data, crawler files, and private-route directives are consisten
 
   const productHtml = await (await request(worker, productRoutes[0])).text();
   assert.match(productHtml, /"@type":"BreadcrumbList"/);
-  assert.match(productHtml, /"@type":"Service"/);
+  assert.match(productHtml, /"@type":"Product"/);
 
   const robots = await request(worker, "/robots.txt");
   const robotsText = await robots.text();
@@ -124,12 +124,12 @@ test("structured data, crawler files, and private-route directives are consisten
   assert.match(api.headers.get("x-robots-tag") ?? "", /noindex, nofollow/);
 });
 
-test("the public site uses U.S. English and region-aware service signals", async () => {
+test("the public site uses U.S. English and direct ordering signals", async () => {
   const worker = await loadWorker();
   const homeHtml = await (await request(worker, "/")).text();
 
   assert.match(homeHtml, /<html[^>]+lang="en-US"/i);
-  assert.match(homeHtml, /Northeast-focused/i);
+  assert.match(homeHtml, /Direct WhatsApp Ordering/i);
   assert.match(homeHtml, /"@type":"AdministrativeArea","name":"Northeastern United States"/);
   assert.match(homeHtml, /"@type":"Country","name":"United States"/);
 });
