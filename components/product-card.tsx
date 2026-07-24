@@ -10,7 +10,7 @@ export function ProductCard({ product }: { product: Product }) {
       <Link className="product-card-image" href={`/products/${product.slug}`}>
         <SiteImage
           src={resolveProductImage(product.image)}
-          alt={`${product.name} on an industrial electronics inspection bench`}
+          alt={`${product.name} product photo`}
           width={1200}
           height={900}
           sizes="(max-width: 760px) 100vw, (max-width: 1080px) 50vw, 33vw"

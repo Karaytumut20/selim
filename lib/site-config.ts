@@ -1,9 +1,9 @@
 export const siteConfig = {
   name: "Global White Star LLC",
   shortName: "Global White Star",
-  tagline: "Reliable Products. Direct Purchasing.",
+  tagline: "Business Technology. Direct Purchasing.",
   description:
-    "A practical product catalog for business and industrial buyers, with direct availability, pricing, and ordering support through WhatsApp.",
+    "Servers, memory, processors, monitors, storage, networking, and power products with direct availability, pricing, and ordering support through WhatsApp.",
   url: "https://northstar-circuit-works.umutkaraytu.chatgpt.site",
   phone: "+1 305 555 0147",
   phoneHref: "+13055550147",
@@ -27,7 +27,7 @@ export const siteConfig = {
 
 export const navItems = [
   { label: "Products", href: "/products" },
-  { label: "How to Order", href: "/repairs" },
+  { label: "How to Order", href: "/how-to-order" },
   { label: "Solutions", href: "/industries" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },

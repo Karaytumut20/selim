@@ -11,7 +11,7 @@ export function Footer() {
       <div className="container footer-main">
         <div className="footer-intro">
           <Brand light />
-          <p>A straightforward catalog and direct purchasing support for business and industrial products.</p>
+          <p>Servers, components, displays, storage, networking, and power products with direct purchasing support.</p>
           <a className="footer-request" href={buildGeneralOrderUrl()} target="_blank" rel="noopener noreferrer"><MessageCircle /> Start a WhatsApp order <ArrowUpRight /></a>
         </div>
         <div className="footer-col"><span>Navigate</span>{navItems.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}</div>

@@ -5,7 +5,7 @@ import { siteConfig } from "../lib/site-config";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const products = await getPublishedProducts();
   const staticLastModified = new Date("2026-07-22T00:00:00.000Z");
-  const routes = ["", "/repairs", "/products", "/industries", "/about", "/contact"];
+  const routes = ["", "/how-to-order", "/products", "/industries", "/about", "/contact"];
   return [
     ...routes.map((route) => ({ url: `${siteConfig.url}${route}`, lastModified: staticLastModified })),
     ...products.map((product) => ({

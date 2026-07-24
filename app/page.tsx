@@ -24,17 +24,18 @@ import { pageMetadata } from "../lib/seo";
 import { buildGeneralOrderUrl, buildProductOrderUrl } from "../lib/whatsapp";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Business & Industrial Product Catalog",
-  description: "Browse business and industrial products, review product details, and place an order directly through WhatsApp.",
+  title: "Servers, Components & Professional Electronics",
+  description: "Browse servers, RAM, processors, monitors, storage, networking, and power products, then order directly through WhatsApp.",
   path: "/",
 });
 
 const categoryCopy = [
-  "Control, switching, and machine interface products for daily operations.",
-  "Communication, signal, and I/O products for connected systems.",
-  "Motion and drive products for precise industrial applications.",
-  "Operator interface and display products for clear machine control.",
-  "Power conversion and distribution products for reliable installations.",
+  "Rack and tower systems for business infrastructure and demanding workloads.",
+  "ECC memory options for compatible servers and professional workstations.",
+  "High-performance CPUs for workstations, servers, and compute-heavy tasks.",
+  "Professional displays for office, engineering, design, and monitoring.",
+  "Enterprise SSD options for fast, reliable, high-capacity data storage.",
+  "Managed switches and UPS systems for stable, connected infrastructure.",
 ];
 
 const steps = [
@@ -90,9 +91,9 @@ export default async function Home() {
       <section className="commerce-hero dark-section">
         <div className="container commerce-hero-grid">
           <div className="commerce-hero-copy">
-            <span className="eyebrow light">Direct product supply / U.S.</span>
-            <h1>Products for work. Ordering without friction.</h1>
-            <p>Browse the catalog, choose what you need, and complete the order with a pre-filled WhatsApp message. No account, cart, or complicated checkout.</p>
+            <span className="eyebrow light">Professional electronics / U.S.</span>
+            <h1>Technology that keeps business moving.</h1>
+            <p>Shop servers, RAM, processors, monitors, storage, networking, and power products. Choose what you need and order through a pre-filled WhatsApp message.</p>
             <div className="hero-actions">
               <Link className="button button-primary" href="/products"><Box /> Browse Products</Link>
               <a className="button button-secondary" href={buildGeneralOrderUrl()} target="_blank" rel="noopener noreferrer"><MessageCircle /> Ask Sales</a>
@@ -130,13 +131,13 @@ export default async function Home() {
 
       <section className="catalog-preview content-section">
         <div className="container">
-          <SectionHeading eyebrow="Featured products" title="A clean catalog built for quick decisions." intro="Open a product for technical details, or start the purchase immediately from its card." />
+          <SectionHeading eyebrow="Featured electronics" title="Business technology, clearly presented." intro="Compare the essential details, confirm compatibility, or start the purchase immediately from any product card." />
           <div className="product-grid">{products.filter((product) => product.featured).slice(0, 6).map((product) => <ProductCard key={product.id} product={product} />)}</div>
           <div className="section-end-link"><Link href="/products">View all products <ArrowRight /></Link></div>
         </div>
       </section>
 
-      <section className="repair-categories cream-section content-section">
+      <section className="product-categories cream-section content-section">
         <div className="container">
           <SectionHeading eyebrow="Shop by category" title="Find the right product family faster." intro="Each category takes you straight to a filtered product list." />
           <div className="category-editorial">

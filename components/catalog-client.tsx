@@ -63,7 +63,7 @@ export function CatalogClient({ initialProducts = fallbackProducts }: { initialP
       <aside className="catalog-filters"><div className="filter-title"><SlidersHorizontal /><strong>Filter catalog</strong></div>{filterControls}<div className="filter-note"><span>Can’t find the product?</span><p>Send the brand, model, or a reference photo to our sales team.</p><a href="/contact">Request sourcing help →</a></div></aside>
       <div className="catalog-results">
         <div className="catalog-toolbar">
-          <div className="catalog-search"><Search /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search part number, family, or board type…" aria-label="Search product catalog" /></div>
+          <div className="catalog-search"><Search /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search product, family, category, or code…" aria-label="Search product catalog" /></div>
           <button className="filter-drawer-trigger" onClick={() => setDrawer(true)}><Filter /> Filters</button>
           <label className="sort-control"><span>Sort</span><select value={sort} onChange={(e) => setSort(e.target.value)}><option>Featured first</option><option>Part number</option><option>Name A–Z</option></select></label>
         </div>

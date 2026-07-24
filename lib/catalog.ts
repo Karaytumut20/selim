@@ -1,5 +1,4 @@
 import { products as fallbackProducts, type Product } from "./products";
-import { createPublicSupabaseClient } from "./supabase/server";
 
 export type ProductStatus = "draft" | "published";
 
@@ -94,33 +93,11 @@ export function fallbackManagedProducts(): ManagedProduct[] {
 }
 
 export async function getPublishedProducts(): Promise<ManagedProduct[]> {
-  const supabase = createPublicSupabaseClient();
-  if (!supabase) return fallbackManagedProducts();
-
-  const { data, error } = await supabase
-    .from("products")
-    .select("*")
-    .eq("status", "published")
-    .order("sort_order", { ascending: true })
-    .order("created_at", { ascending: true });
-
-  if (error) return fallbackManagedProducts();
-  return (data as ProductRow[]).map(rowToProduct);
+  return fallbackManagedProducts();
 }
 
 export async function getPublishedProduct(slug: string): Promise<ManagedProduct | undefined> {
-  const supabase = createPublicSupabaseClient();
-  if (!supabase) return fallbackManagedProducts().find((product) => product.slug === slug);
-
-  const { data, error } = await supabase
-    .from("products")
-    .select("*")
-    .eq("slug", slug)
-    .eq("status", "published")
-    .maybeSingle();
-
-  if (error) return fallbackManagedProducts().find((product) => product.slug === slug);
-  return data ? rowToProduct(data as ProductRow) : undefined;
+  return fallbackManagedProducts().find((product) => product.slug === slug);
 }
 
 export function getRelatedProductsFromList(product: Product, catalog: Product[]) {

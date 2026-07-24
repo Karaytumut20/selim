@@ -4,7 +4,7 @@ import test from "node:test";
 const staticRoutes = [
   "/",
   "/products",
-  "/repairs",
+  "/how-to-order",
   "/industries",
   "/about",
   "/contact",
@@ -14,20 +14,15 @@ const staticRoutes = [
 ];
 
 const productRoutes = [
-  "axc-900-industrial-control-board",
-  "a-440-machine-control-pcb",
-  "c-220-plc-communication-board",
-  "s-760-servo-drive-control-board",
-  "h-180-hmi-main-logic-board",
-  "p-310-industrial-power-supply-pcb",
-  "m-610-cnc-interface-board",
-  "a-520-process-control-board",
-  "c-340-remote-io-board",
-  "s-420-drive-interface-board",
-  "h-240-operator-panel-controller",
-  "p-480-dc-power-regulation-board",
-  "m-720-cnc-axis-control-board",
-  "i-115-industrial-relay-board",
+  "proedge-2u24-rack-server",
+  "coreline-1u12-rack-server",
+  "ddr5-ecc-server-memory-64gb",
+  "ddr5-ecc-server-memory-128gb-kit",
+  "workstation-processor-16-core",
+  "professional-4k-monitor-27-inch",
+  "enterprise-nvme-ssd-3-84tb",
+  "managed-gigabit-switch-24-port",
+  "online-ups-1500va",
 ].map((slug) => `/products/${slug}`);
 
 async function loadWorker() {
@@ -70,7 +65,7 @@ test("an optimizer request without Cloudflare bindings fails safely", async () =
   const worker = await loadWorker();
   const response = await request(
     worker,
-    "/_vinext/image?url=%2Fimages%2Fproducts%2Fcategory-control.jpg&w=640&q=75",
+    "/_vinext/image?url=%2Fimages%2Fproducts%2Fserver-rack.png&w=640&q=75",
   );
 
   assert.equal(response.status, 503);
@@ -79,7 +74,7 @@ test("an optimizer request without Cloudflare bindings fails safely", async () =
 
 test("public pages expose complete indexable metadata", async () => {
   const worker = await loadWorker();
-  const routes = ["/", "/products", "/repairs", "/industries", "/about", "/contact", productRoutes[0]];
+  const routes = ["/", "/products", "/how-to-order", "/industries", "/about", "/contact", productRoutes[0]];
 
   for (const pathname of routes) {
     const response = await request(worker, pathname);

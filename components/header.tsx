@@ -52,7 +52,7 @@ export function Header() {
       <header className="site-header">
         <div className="utility-bar">
           <div className="container utility-inner">
-            <span>Business &amp; Industrial Supply</span>
+            <span>Servers &amp; Professional Electronics</span>
             <div><a href={`tel:${siteConfig.phoneHref}`}>{siteConfig.phone}</a><a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a><span>Direct WhatsApp Ordering</span></div>
           </div>
         </div>
@@ -81,7 +81,7 @@ export function Header() {
             <input ref={inputRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search a product, family, category, or code…" aria-label="Search catalog" />
           </div>
           <div className="search-results" aria-live="polite">
-            {!normalized && <p className="search-hint">Try a product code, family, category, or product name.</p>}
+            {!normalized && <p className="search-hint">Try “server”, “ECC RAM”, “processor”, “4K monitor”, or a product code.</p>}
             {normalized && results.length === 0 && <div className="search-empty"><strong>No exact catalog match.</strong><p>Our sales team can help source an alternative.</p><Link href="/contact" onClick={() => setSearchOpen(false)}>Ask the sales team <ArrowRight size={16} /></Link></div>}
             {results.map((product) => (
               <Link className="search-result" key={product.id} href={`/products/${product.slug}`} onClick={() => setSearchOpen(false)}>
