@@ -4,7 +4,7 @@ export const siteConfig = {
   tagline: "Reliable Products. Direct Purchasing.",
   description:
     "A practical product catalog for business and industrial buyers, with direct availability, pricing, and ordering support through WhatsApp.",
-  url: "https://global-white-star-llc.umutkaraytu.chatgpt.site",
+  url: "https://northstar-circuit-works.umutkaraytu.chatgpt.site",
   phone: "+1 305 555 0147",
   phoneHref: "+13055550147",
   whatsappNumber: "13055550147",
