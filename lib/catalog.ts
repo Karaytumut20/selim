@@ -1,5 +1,11 @@
 import { categories, products as fallbackProducts, type Product } from "./products";
-import { createPublicSupabaseClient } from "./supabase/server";
+import { readCategoryConfig, uniqueCategories } from "./category-config";
+import { createAdminSupabaseClient, createPublicSupabaseClient } from "./supabase/server";
+
+const CATALOG_SCOPE_KEY = "__catalogScope";
+const CATALOG_SCOPE = "electronics";
+const PRICE_KEY = "__price";
+const CURRENCY_KEY = "__currency";
 
 export type ProductStatus = "draft" | "published";
 
@@ -31,7 +37,22 @@ export type ProductRow = {
 
 export type ManagedProduct = Product & { status: ProductStatus; sortOrder: number; createdAt?: string; updatedAt?: string };
 
+export function isManagedCatalogRow(row: Pick<ProductRow, "category" | "specifications">) {
+  return row.specifications?.[CATALOG_SCOPE_KEY] === CATALOG_SCOPE ||
+    categories.some((category) => category === row.category);
+}
+
 export function rowToProduct(row: ProductRow): ManagedProduct {
+  const specifications = { ...(row.specifications || {}) };
+  const parsedPrice = Number(specifications[PRICE_KEY]);
+  const price = specifications[PRICE_KEY] !== undefined && Number.isFinite(parsedPrice) && parsedPrice >= 0
+    ? parsedPrice
+    : undefined;
+  const currency = specifications[CURRENCY_KEY] || "USD";
+  delete specifications[CATALOG_SCOPE_KEY];
+  delete specifications[PRICE_KEY];
+  delete specifications[CURRENCY_KEY];
+
   return {
     id: row.id,
     slug: row.slug,
@@ -41,6 +62,8 @@ export function rowToProduct(row: ProductRow): ManagedProduct {
     category: row.category,
     shortDescription: row.short_description,
     longDescription: row.long_description,
+    price,
+    currency,
     repairSupported: row.repair_supported,
     typicalFaults: row.typical_faults || [],
     repairCapabilities: row.repair_capabilities || [],
@@ -48,7 +71,7 @@ export function rowToProduct(row: ProductRow): ManagedProduct {
     warrantyText: row.warranty_text,
     image: row.image_url,
     gallery: row.gallery || [],
-    specifications: row.specifications || {},
+    specifications,
     relatedProductIds: row.related_product_ids || [],
     featured: row.featured,
     primaryProduct: row.primary_product,
@@ -60,6 +83,14 @@ export function rowToProduct(row: ProductRow): ManagedProduct {
 }
 
 export function productToRow(product: ManagedProduct): ProductRow {
+  const specifications = {
+    ...product.specifications,
+    [CATALOG_SCOPE_KEY]: CATALOG_SCOPE,
+    [CURRENCY_KEY]: product.currency || "USD",
+    ...(typeof product.price === "number" && Number.isFinite(product.price) && product.price >= 0
+      ? { [PRICE_KEY]: String(product.price) }
+      : {}),
+  };
   return {
     id: product.id,
     slug: product.slug,
@@ -76,7 +107,7 @@ export function productToRow(product: ManagedProduct): ProductRow {
     warranty_text: product.warrantyText,
     image_url: product.image,
     gallery: product.gallery,
-    specifications: product.specifications,
+    specifications,
     related_product_ids: product.relatedProductIds,
     featured: product.featured,
     primary_product: product.primaryProduct,
@@ -102,11 +133,10 @@ export async function getPublishedProducts(): Promise<ManagedProduct[]> {
       .from("products")
       .select("*")
       .eq("status", "published")
-      .in("category", [...categories])
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true });
     if (error) throw error;
-    return (data as ProductRow[] | null)?.map(rowToProduct) || [];
+    return ((data as ProductRow[] | null) || []).filter(isManagedCatalogRow).map(rowToProduct);
   } catch {
     return fallbackManagedProducts();
   }
@@ -121,13 +151,22 @@ export async function getPublishedProduct(slug: string): Promise<ManagedProduct 
         .select("*")
         .eq("slug", slug)
         .eq("status", "published")
-        .in("category", [...categories])
         .maybeSingle();
       if (error) throw error;
-      return data ? rowToProduct(data as ProductRow) : undefined;
+      return data && isManagedCatalogRow(data as ProductRow) ? rowToProduct(data as ProductRow) : undefined;
     } catch {}
   }
   return fallbackManagedProducts().find((product) => product.slug === slug);
+}
+
+export async function getCatalogCategories(products?: Product[]) {
+  const assigned = (products || []).map((product) => product.category);
+  try {
+    const configured = await readCategoryConfig(createAdminSupabaseClient());
+    return uniqueCategories([...configured, ...assigned]);
+  } catch {
+    return uniqueCategories([...categories, ...assigned]);
+  }
 }
 
 export function getRelatedProductsFromList(product: Product, catalog: Product[]) {

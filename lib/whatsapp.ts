@@ -1,5 +1,5 @@
 import { siteConfig } from "./site-config";
-import type { Product } from "./products";
+import { formatProductPrice, type Product } from "./products";
 
 export const whatsappBase = `https://wa.me/${siteConfig.whatsappNumber}`;
 
@@ -13,5 +13,5 @@ export function buildGeneralOrderUrl() {
 
 export function buildProductOrderUrl(product: Product, currentUrl?: string) {
   const productUrl = currentUrl || `${siteConfig.url}/products/${product.slug}`;
-  return buildWhatsAppUrl(`Hello ${siteConfig.name},\n\nI would like to purchase the following product:\n\nProduct: ${product.name}\nProduct Code: ${product.partNumber}\nCategory: ${product.category}\nQuantity: 1\nProduct Page: ${productUrl}\n\nDelivery location:\n[City / State]\n\nPlease confirm current price, availability, and delivery details.`);
+  return buildWhatsAppUrl(`Hello ${siteConfig.name},\n\nI would like to purchase the following product:\n\nProduct: ${product.name}\nProduct Code: ${product.partNumber}\nCategory: ${product.category}\nPrice: ${formatProductPrice(product)}\nQuantity: 1\nProduct Page: ${productUrl}\n\nDelivery location:\n[City / State]\n\nPlease confirm current price, availability, and delivery details.`);
 }

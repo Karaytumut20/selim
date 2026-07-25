@@ -17,8 +17,8 @@ import { PageShell, SectionHeading } from "../components/page-shell";
 import { ProductCard } from "../components/product-card";
 import { SiteImage } from "../components/site-image";
 import { JsonLd } from "../components/json-ld";
-import { getPublishedProducts } from "../lib/catalog";
-import { categories, primaryProduct as fallbackPrimaryProduct, resolveProductImage } from "../lib/products";
+import { getCatalogCategories, getPublishedProducts } from "../lib/catalog";
+import { formatProductPrice, hasProductPrice, primaryProduct as fallbackPrimaryProduct, resolveProductImage } from "../lib/products";
 import { siteConfig } from "../lib/site-config";
 import { pageMetadata } from "../lib/seo";
 import { buildGeneralOrderUrl, buildProductOrderUrl } from "../lib/whatsapp";
@@ -29,18 +29,18 @@ export const metadata: Metadata = pageMetadata({
   path: "/",
 });
 
-const categoryCopy = [
-  "Rack and tower systems for business infrastructure and demanding workloads.",
-  "ECC memory options for compatible servers and professional workstations.",
-  "High-performance CPUs for workstations, servers, and compute-heavy tasks.",
-  "Professional displays for office, engineering, design, and monitoring.",
-  "Enterprise SSD options for fast, reliable, high-capacity data storage.",
-  "Managed switches and UPS systems for stable, connected infrastructure.",
-];
+const categoryCopy: Record<string, string> = {
+  Servers: "Rack and tower systems for business infrastructure and demanding workloads.",
+  "Server Memory": "ECC memory options for compatible servers and professional workstations.",
+  Processors: "High-performance CPUs for workstations, servers, and compute-heavy tasks.",
+  Monitors: "Professional displays for office, engineering, design, and monitoring.",
+  Storage: "Enterprise SSD options for fast, reliable, high-capacity data storage.",
+  "Networking & Power": "Managed switches and UPS systems for stable, connected infrastructure.",
+};
 
 const steps = [
   ["Choose a product", "Browse categories or search by product code."],
-  ["Tap “Buy now”", "WhatsApp opens with product details already filled in."],
+  ["Buy or request a quote", "WhatsApp opens with product and pricing details already filled in."],
   ["Confirm the order", "We confirm price, availability, quantity, and delivery."],
   ["Receive your product", "Dispatch and tracking details are shared directly."],
 ];
@@ -49,6 +49,7 @@ export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const products = await getPublishedProducts();
+  const catalogCategories = await getCatalogCategories(products);
   const primaryProduct = products.find((product) => product.primaryProduct) || products[0] || fallbackPrimaryProduct;
   const organizationSchema = {
     "@context": "https://schema.org",
@@ -109,8 +110,8 @@ export default async function Home() {
             <div className="hero-product-overlay">
               <span>Featured product</span>
               <strong>{primaryProduct.name}</strong>
-              <small>{primaryProduct.partNumber}</small>
-              <a href={buildProductOrderUrl(primaryProduct)} target="_blank" rel="noopener noreferrer">Buy on WhatsApp <ArrowRight /></a>
+              <small>{primaryProduct.partNumber} · {formatProductPrice(primaryProduct)}</small>
+              <a href={buildProductOrderUrl(primaryProduct)} target="_blank" rel="noopener noreferrer">{hasProductPrice(primaryProduct) ? "Buy on WhatsApp" : "Request a quote"} <ArrowRight /></a>
             </div>
           </div>
         </div>
@@ -141,9 +142,9 @@ export default async function Home() {
         <div className="container">
           <SectionHeading eyebrow="Shop by category" title="Find the right product family faster." intro="Each category takes you straight to a filtered product list." />
           <div className="category-editorial">
-            {categories.map((category, index) => (
+            {catalogCategories.map((category, index) => (
               <Link href={`/products?category=${encodeURIComponent(category)}`} key={category} className={index === 0 ? "category-primary" : ""}>
-                <span>0{index + 1}</span><h3>{category}</h3><p>{categoryCopy[index]}</p><ChevronRight />
+                <span>{String(index + 1).padStart(2, "0")}</span><h3>{category}</h3><p>{categoryCopy[category] || `Browse available ${category.toLowerCase()} products and request current commercial details.`}</p><ChevronRight />
               </Link>
             ))}
           </div>

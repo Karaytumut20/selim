@@ -7,6 +7,8 @@ export type Product = {
   category: string;
   shortDescription: string;
   longDescription: string;
+  price?: number;
+  currency?: string;
   repairSupported: boolean;
   typicalFaults: string[];
   repairCapabilities: string[];
@@ -252,6 +254,20 @@ export function getCommerceDescription(product: Product) {
   return product.shortDescription;
 }
 
+export function hasProductPrice(product: Product) {
+  return typeof product.price === "number" && Number.isFinite(product.price) && product.price >= 0;
+}
+
+export function formatProductPrice(product: Product) {
+  if (!hasProductPrice(product)) return "Request a quote";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: product.currency || "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(product.price!);
+}
+
 export function getProductHighlights(product: Product) {
   return product.typicalFaults;
 }
@@ -263,6 +279,7 @@ export function getProductApplications(product: Product) {
 export function getCommerceSpecifications(product: Product) {
   return {
     ...product.specifications,
+    Price: formatProductPrice(product),
     "Product code": product.partNumber,
     "Product family": product.manufacturerOrFamily,
     Category: product.category,

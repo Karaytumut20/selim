@@ -4,10 +4,10 @@ import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowDown, ArrowLeft, ArrowUp, Check, CircleDashed, ImagePlus,
-  LayoutGrid, PackagePlus, Pencil, Search, ShieldCheck, Trash2, Upload, X,
+  LayoutGrid, PackagePlus, Pencil, Plus, Search, ShieldCheck, Tags, Trash2, Upload, X,
 } from "lucide-react";
 import { fallbackManagedProducts, slugifyProduct, type ManagedProduct } from "../lib/catalog";
-import { categories, productCardImages, resolveProductImage } from "../lib/products";
+import { categories, formatProductPrice, productCardImages, resolveProductImage } from "../lib/products";
 import { SiteImage } from "./site-image";
 
 type MediaItem = { id: string; name: string; path: string; imageUrl: string };
@@ -89,6 +89,9 @@ export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: stri
   const [editorProductId, setEditorProductId] = useState<string | null>(null);
   const [editorRevision, setEditorRevision] = useState(0);
   const [images, setImages] = useState<ImageEntry[]>([]);
+  const [catalogCategories, setCatalogCategories] = useState<string[]>([...categories]);
+  const [newCategory, setNewCategory] = useState("");
+  const [categoryBusy, setCategoryBusy] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<ManagedProduct | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -98,9 +101,9 @@ export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: stri
     () => items.find((item) => item.id === editorProductId) || null,
     [editorProductId, items],
   );
-  const editorCategories = editorProduct && !categories.some((category) => category === editorProduct.category)
-    ? [editorProduct.category, ...categories]
-    : [...categories];
+  const editorCategories = editorProduct && !catalogCategories.includes(editorProduct.category)
+    ? [editorProduct.category, ...catalogCategories]
+    : catalogCategories;
   const visibleItems = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return items;
@@ -121,10 +124,12 @@ export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: stri
   const loadProducts = useCallback(async (showNotice = false) => {
     setLoading(true);
     try {
-      const body = await responseJson<{ products: ManagedProduct[] }>(
-        await fetch("/api/admin/products", { cache: "no-store" }),
-      );
-      setItems(body.products);
+      const [productBody, categoryBody] = await Promise.all([
+        responseJson<{ products: ManagedProduct[] }>(await fetch("/api/admin/products", { cache: "no-store" })),
+        responseJson<{ categories: string[] }>(await fetch("/api/admin/categories", { cache: "no-store" })),
+      ]);
+      setItems(productBody.products);
+      setCatalogCategories(categoryBody.categories);
       if (showNotice) notify("Product catalog refreshed.");
     } catch (error) {
       notify(error instanceof Error ? error.message : "Unable to refresh the product catalog.");
@@ -132,6 +137,48 @@ export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: stri
       setLoading(false);
     }
   }, []);
+
+  async function addCategory(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const name = newCategory.replace(/\s+/g, " ").trim();
+    if (!name) return;
+    setCategoryBusy(true);
+    try {
+      const body = await responseJson<{ categories: string[] }>(
+        await fetch("/api/admin/categories", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ name }),
+        }),
+      );
+      setCatalogCategories(body.categories);
+      setNewCategory("");
+      notify(`Category “${name}” added.`);
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "Unable to add category.");
+    } finally {
+      setCategoryBusy(false);
+    }
+  }
+
+  async function removeCategory(name: string) {
+    if (items.some((item) => item.category === name)) {
+      notify("Move or delete products in this category before removing it.");
+      return;
+    }
+    setCategoryBusy(true);
+    try {
+      const body = await responseJson<{ categories: string[] }>(
+        await fetch(`/api/admin/categories?name=${encodeURIComponent(name)}`, { method: "DELETE" }),
+      );
+      setCatalogCategories(body.categories);
+      notify(`Category “${name}” removed.`);
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "Unable to remove category.");
+    } finally {
+      setCategoryBusy(false);
+    }
+  }
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => void loadProducts());
@@ -239,6 +286,8 @@ export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: stri
     const name = String(data.get("name") || "").trim();
     const partNumber = String(data.get("partNumber") || "").trim();
     const slug = slugifyProduct(String(data.get("slug") || "").trim() || `${partNumber}-${name}`);
+    const priceText = String(data.get("price") || "").trim();
+    const parsedPrice = priceText ? Number(priceText) : undefined;
 
     try {
       const uploadedImages: string[] = [];
@@ -254,9 +303,11 @@ export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: stri
         name,
         partNumber,
         manufacturerOrFamily: String(data.get("family") || "").trim() || "Unassigned family",
-        category: String(data.get("category") || categories[0]),
+        category: String(data.get("category") || catalogCategories[0] || categories[0]),
         shortDescription: String(data.get("shortDescription") || "").trim(),
         longDescription: String(data.get("longDescription") || "").trim(),
+        price: typeof parsedPrice === "number" && Number.isFinite(parsedPrice) && parsedPrice >= 0 ? parsedPrice : undefined,
+        currency: String(data.get("currency") || "USD"),
         repairSupported: data.get("repairSupported") === "on",
         typicalFaults: lines(data.get("typicalFaults")),
         repairCapabilities: lines(data.get("repairCapabilities")),
@@ -346,17 +397,26 @@ export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: stri
         <article><span>Drafts</span><strong>{items.filter((item) => item.status === "draft").length}</strong><small>Private product records</small></article>
       </div>
 
+      <section className="admin-category-manager">
+        <div className="admin-category-heading"><div><Tags /><span><strong>Product categories</strong><small>Add categories here, then assign them in the product editor.</small></span></div><form onSubmit={(event) => void addCategory(event)}><input value={newCategory} onChange={(event) => setNewCategory(event.target.value)} maxLength={80} placeholder="New category name" aria-label="New category name" /><button type="submit" disabled={categoryBusy || !newCategory.trim()}><Plus /> Add category</button></form></div>
+        <div className="admin-category-list">{catalogCategories.map((category) => {
+          const productCount = items.filter((item) => item.category === category).length;
+          return <span key={category}><strong>{category}</strong><small>{productCount} product{productCount === 1 ? "" : "s"}</small><button type="button" disabled={categoryBusy || productCount > 0} onClick={() => void removeCategory(category)} aria-label={`Remove ${category}`} title={productCount > 0 ? "Move or delete assigned products first" : `Remove ${category}`}><X /></button></span>;
+        })}</div>
+      </section>
+
       <section className="admin-catalog">
         <div className="admin-catalog-head">
           <div className="admin-search"><Search /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search product, family, category, or part number…" aria-label="Search products" /></div>
           <span>{loading ? "Loading…" : `${visibleItems.length} records`}</span>
         </div>
         <div className="admin-table" role="table" aria-label="Product records">
-          <div className="admin-table-row admin-table-labels" role="row"><span>Product</span><span>Identity</span><span>Category</span><span>Status</span><span>Actions</span></div>
+          <div className="admin-table-row admin-table-labels" role="row"><span>Product</span><span>Identity</span><span>Category</span><span>Price</span><span>Status</span><span>Actions</span></div>
           {visibleItems.map((item) => <div className="admin-table-row" role="row" key={item.id}>
             <div className="admin-product-cell"><SiteImage src={resolveProductImage(item.image)} alt="" width={88} height={66} /><div><strong>{item.name}</strong><small>{item.shortDescription}</small></div></div>
             <div><strong>{item.partNumber}</strong><small>{item.manufacturerOrFamily}</small></div>
             <span>{item.category}</span>
+            <strong className="admin-price-cell">{formatProductPrice(item)}</strong>
             <span className={`admin-record-status ${item.status}`}>{item.status}</span>
             <div className="admin-row-actions"><button type="button" onClick={() => openEditProduct(item)} aria-label={`Edit ${item.name}`}><Pencil /></button><button className="danger" type="button" onClick={() => setPendingDelete(item)} aria-label={`Delete ${item.name}`}><Trash2 /></button></div>
           </div>)}
@@ -388,9 +448,11 @@ export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: stri
             <label><span>Part number *</span><input name="partNumber" required defaultValue={editorProduct?.partNumber} /></label>
             <label className="admin-form-wide"><span>URL slug</span><input name="slug" defaultValue={editorProduct?.slug} placeholder="Generated automatically when left empty" /></label>
             <label><span>Product family</span><input name="family" defaultValue={editorProduct?.manufacturerOrFamily} placeholder="Example: Enterprise Memory" /></label>
-            <label><span>Category</span><select name="category" defaultValue={editorProduct?.category || categories[0]}>{editorCategories.map((category) => <option key={category}>{category}</option>)}</select></label>
+            <label><span>Category</span><select name="category" defaultValue={editorProduct?.category || catalogCategories[0] || categories[0]}>{editorCategories.map((category) => <option key={category}>{category}</option>)}</select></label>
             <label><span>Publication status</span><select name="status" defaultValue={editorProduct?.status || "draft"}><option value="draft">Draft — private</option><option value="published">Published — live</option></select></label>
             <label><span>Catalog sort order</span><input name="sortOrder" type="number" min="0" step="1" defaultValue={editorProduct?.sortOrder ?? items.length} /></label>
+            <label><span>Price · optional</span><input name="price" type="number" min="0" step="0.01" defaultValue={editorProduct?.price ?? ""} placeholder="Leave empty for Request a quote" /></label>
+            <label><span>Currency</span><select name="currency" defaultValue={editorProduct?.currency || "USD"}><option value="USD">USD — US Dollar</option><option value="EUR">EUR — Euro</option><option value="GBP">GBP — British Pound</option><option value="TRY">TRY — Turkish Lira</option></select></label>
             <label className="admin-form-wide"><span>Short description *</span><textarea name="shortDescription" required rows={3} defaultValue={editorProduct?.shortDescription} placeholder="A concise summary used on product cards." /></label>
             <label className="admin-form-wide"><span>Full description *</span><textarea name="longDescription" required rows={6} defaultValue={editorProduct?.longDescription} placeholder="Describe the product, compatibility, configuration options, and ordering details." /></label>
             <label><span>Product highlights · one per line</span><textarea name="typicalFaults" rows={6} defaultValue={editorProduct?.typicalFaults.join("\n")} placeholder={"64 GB capacity\nECC error correction\nRegistered DIMM"} /></label>

@@ -1,6 +1,6 @@
 import { requireAdminApiAccess } from "../../../../lib/admin-auth";
-import { fallbackManagedProducts, productToRow, rowToProduct, type ManagedProduct, type ProductRow } from "../../../../lib/catalog";
-import { categories } from "../../../../lib/products";
+import { fallbackManagedProducts, isManagedCatalogRow, productToRow, rowToProduct, type ManagedProduct, type ProductRow } from "../../../../lib/catalog";
+import { CATEGORY_CONFIG_ID } from "../../../../lib/category-config";
 import { createAdminSupabaseClient } from "../../../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +10,8 @@ function validProduct(input: unknown): input is ManagedProduct {
   const product = input as Partial<ManagedProduct>;
   return Boolean(
     product.id && product.slug && product.name && product.partNumber && product.category &&
-    categories.some((category) => category === product.category) &&
+    product.id !== CATEGORY_CONFIG_ID &&
+    product.category.length <= 80 &&
     (product.status === "draft" || product.status === "published") &&
     Array.isArray(product.typicalFaults) && Array.isArray(product.repairCapabilities),
   );
@@ -25,11 +26,20 @@ export async function GET() {
     const { data, error } = await supabase
       .from("products")
       .select("*")
-      .in("category", [...categories])
+      .neq("id", CATEGORY_CONFIG_ID)
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true });
     if (error) throw error;
-    if (data?.length) return Response.json({ products: (data as ProductRow[]).map(rowToProduct) });
+    const catalogRows = ((data || []) as ProductRow[]).filter(isManagedCatalogRow);
+    if (catalogRows.length) {
+      const normalizedRows = catalogRows.map((row) => productToRow(rowToProduct(row)));
+      const needsScopeMigration = catalogRows.some((row) => row.specifications?.__catalogScope !== "electronics");
+      if (needsScopeMigration) {
+        const { error: migrationError } = await supabase.from("products").upsert(normalizedRows, { onConflict: "id" });
+        if (migrationError) throw migrationError;
+      }
+      return Response.json({ products: catalogRows.map(rowToProduct) });
+    }
 
     const seedRows = fallbackManagedProducts().map(productToRow);
     const { data: seeded, error: seedError } = await supabase

@@ -125,6 +125,8 @@ test("the public site uses U.S. English and direct ordering signals", async () =
 
   assert.match(homeHtml, /<html[^>]+lang="en-US"/i);
   assert.match(homeHtml, /Direct WhatsApp Ordering/i);
+  assert.match(homeHtml, /Request a quote/i);
+  assert.doesNotMatch(homeHtml, /__catalogScope|__price|__currency/);
   assert.match(homeHtml, /"@type":"AdministrativeArea","name":"Northeastern United States"/);
   assert.match(homeHtml, /"@type":"Country","name":"United States"/);
 });

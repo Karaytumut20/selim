@@ -17,7 +17,7 @@ export default function ContactPage() {
       <div className="contact-order-panel">
         <span className="eyebrow">Start here</span>
         <h2>Product questions and orders belong in one conversation.</h2>
-        <p>Use the prepared WhatsApp message, or browse the catalog and choose “Buy now” on a specific product.</p>
+        <p>Use the prepared WhatsApp message, or browse the catalog and choose “Buy now” or “Request a quote” on a specific product.</p>
         <div><a className="button button-primary" href={buildGeneralOrderUrl()} target="_blank" rel="noopener noreferrer"><MessageCircle /> Message Sales on WhatsApp</a><Link className="button button-dark" href="/products"><Search /> Browse Products</Link></div>
         <ul className="check-list"><li>Ask for current price and availability</li><li>Confirm a product code or compatible alternative</li><li>Share your quantity and delivery location</li><li>Receive order and dispatch details directly</li></ul>
       </div>
