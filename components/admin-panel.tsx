@@ -3,20 +3,17 @@
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowLeft, Check, CircleDashed, Database, FileImage, HardDrive, ImagePlus,
-  LayoutGrid, PackagePlus, Pencil, RefreshCw, Search, Settings2, ShieldCheck,
-  Trash2, Upload, X,
+  ArrowDown, ArrowLeft, ArrowUp, Check, CircleDashed, ImagePlus,
+  LayoutGrid, PackagePlus, Pencil, Search, ShieldCheck, Trash2, Upload, X,
 } from "lucide-react";
 import { fallbackManagedProducts, slugifyProduct, type ManagedProduct } from "../lib/catalog";
 import { categories, productCardImages, resolveProductImage } from "../lib/products";
 import { SiteImage } from "./site-image";
 
-type AdminTab = "products" | "media" | "settings";
 type MediaItem = { id: string; name: string; path: string; imageUrl: string };
-type WorkspaceSettings = { defaultRepairSupported: boolean; compactRows: boolean };
+type ImageEntry = { id: string; src: string; file?: File };
 
-const SETTINGS_STORAGE_KEY = "global-white-star-admin-settings-v2";
-const defaultSettings: WorkspaceSettings = { defaultRepairSupported: true, compactRows: false };
+const MAX_PRODUCT_IMAGES = 8;
 
 async function responseJson<T>(response: Response): Promise<T> {
   const body = (await response.json().catch(() => ({}))) as { error?: string };
@@ -25,34 +22,94 @@ async function responseJson<T>(response: Response): Promise<T> {
 }
 
 function lines(value: FormDataEntryValue | null) {
-  return String(value || "").split("\n").map((item) => item.trim()).filter(Boolean);
+  return String(value || "").split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
+}
+
+function relatedIds(value: FormDataEntryValue | null) {
+  return String(value || "").split(/[\r\n,]+/).map((item) => item.trim()).filter(Boolean);
+}
+
+function parseSpecifications(value: FormDataEntryValue | null) {
+  return lines(value).reduce<Record<string, string>>((result, line) => {
+    const pipe = line.indexOf("|");
+    const colon = line.indexOf(":");
+    const separator = pipe > 0 ? pipe : colon;
+    if (separator <= 0) return result;
+    const key = line.slice(0, separator).trim();
+    const specification = line.slice(separator + 1).trim();
+    if (key && specification) result[key] = specification;
+    return result;
+  }, {});
+}
+
+function specificationLines(specifications: Record<string, string>) {
+  return Object.entries(specifications).map(([key, value]) => `${key} | ${value}`).join("\n");
+}
+
+function uniqueImages(product: ManagedProduct) {
+  return [...new Set([product.image, ...product.gallery].filter(Boolean))];
+}
+
+async function optimizeImageForUpload(file: File) {
+  if (file.size <= 700 * 1024) return file;
+
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, 1600 / bitmap.width, 1200 / bitmap.height);
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+  const context = canvas.getContext("2d");
+  if (!context) {
+    bitmap.close();
+    return file;
+  }
+  context.fillStyle = "#f4f3ef";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+
+  let quality = 0.84;
+  let blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+  while (blob && blob.size > 700 * 1024 && quality > 0.54) {
+    quality -= 0.1;
+    blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
+  }
+  if (!blob) return file;
+
+  const baseName = file.name.replace(/\.[^.]+$/, "") || "product";
+  return new File([blob], `${baseName}.jpg`, { type: "image/jpeg", lastModified: file.lastModified });
 }
 
 export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: string }) {
-  const [activeTab, setActiveTab] = useState<AdminTab>("products");
   const [items, setItems] = useState<ManagedProduct[]>(fallbackManagedProducts());
-  const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
-  const [settings, setSettings] = useState(defaultSettings);
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorProductId, setEditorProductId] = useState<string | null>(null);
   const [editorRevision, setEditorRevision] = useState(0);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [images, setImages] = useState<ImageEntry[]>([]);
   const [pendingDelete, setPendingDelete] = useState<ManagedProduct | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const mediaFileRef = useRef<HTMLInputElement>(null);
   const noticeTimer = useRef<number | null>(null);
 
-  const editorProduct = useMemo(() => items.find((item) => item.id === editorProductId) || null, [editorProductId, items]);
+  const editorProduct = useMemo(
+    () => items.find((item) => item.id === editorProductId) || null,
+    [editorProductId, items],
+  );
   const editorCategories = editorProduct && !categories.some((category) => category === editorProduct.category)
-    ? [editorProduct.category, ...categories] : [...categories];
+    ? [editorProduct.category, ...categories]
+    : [...categories];
   const visibleItems = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    return normalized ? items.filter((item) => [item.name, item.partNumber, item.category, item.manufacturerOrFamily].join(" ").toLowerCase().includes(normalized)) : items;
+    if (!normalized) return items;
+    return items.filter((item) =>
+      [item.name, item.partNumber, item.category, item.manufacturerOrFamily]
+        .join(" ")
+        .toLowerCase()
+        .includes(normalized),
+    );
   }, [items, query]);
 
   function notify(message: string) {
@@ -61,42 +118,25 @@ export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: stri
     noticeTimer.current = window.setTimeout(() => setNotice(null), 4200);
   }
 
-  const loadProducts = useCallback(async () => {
-    const body = await responseJson<{ products: ManagedProduct[] }>(await fetch("/api/admin/products", { cache: "no-store" }));
-    setItems(body.products);
-  }, []);
-
-  const loadMedia = useCallback(async () => {
-    const body = await responseJson<{ media: MediaItem[] }>(await fetch("/api/admin/media", { cache: "no-store" }));
-    setMediaItems(body.media);
-  }, []);
-
-  const refreshWorkspace = useCallback(async (showNotice = true) => {
+  const loadProducts = useCallback(async (showNotice = false) => {
     setLoading(true);
     try {
-      await Promise.all([loadProducts(), loadMedia()]);
-      if (showNotice) notify("Supabase catalog and media refreshed.");
+      const body = await responseJson<{ products: ManagedProduct[] }>(
+        await fetch("/api/admin/products", { cache: "no-store" }),
+      );
+      setItems(body.products);
+      if (showNotice) notify("Product catalog refreshed.");
     } catch (error) {
-      notify(error instanceof Error ? error.message : "Unable to refresh the workspace.");
+      notify(error instanceof Error ? error.message : "Unable to refresh the product catalog.");
     } finally {
       setLoading(false);
     }
-  }, [loadMedia, loadProducts]);
+  }, []);
 
   useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      try {
-        const stored = JSON.parse(window.localStorage.getItem(SETTINGS_STORAGE_KEY) || "null");
-        if (stored && typeof stored === "object") setSettings({ ...defaultSettings, ...stored });
-      } catch {}
-      void refreshWorkspace(false);
-    });
+    const frame = window.requestAnimationFrame(() => void loadProducts());
     return () => window.cancelAnimationFrame(frame);
-  }, [refreshWorkspace]);
-
-  useEffect(() => {
-    window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-  }, [settings]);
+  }, [loadProducts]);
 
   useEffect(() => {
     function closeOnEscape(event: KeyboardEvent) {
@@ -110,72 +150,109 @@ export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: stri
 
   useEffect(() => () => {
     if (noticeTimer.current) window.clearTimeout(noticeTimer.current);
-    if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview);
-  }, [preview]);
+  }, []);
 
-  function switchTab(tab: AdminTab) { setActiveTab(tab); setQuery(""); }
+  function revokePendingImages(entries: ImageEntry[]) {
+    entries.forEach((entry) => {
+      if (entry.file && entry.src.startsWith("blob:")) URL.revokeObjectURL(entry.src);
+    });
+  }
+
+  function resetImages(nextImages: ImageEntry[]) {
+    revokePendingImages(images);
+    setImages(nextImages);
+  }
+
   function openNewProduct() {
-    setEditorProductId(null); setPreview(null); setSelectedFile(null);
-    setEditorRevision((current) => current + 1); setEditorOpen(true);
+    setEditorProductId(null);
+    resetImages([]);
+    setEditorRevision((current) => current + 1);
+    setEditorOpen(true);
   }
+
   function openEditProduct(item: ManagedProduct) {
-    setEditorProductId(item.id); setPreview(resolveProductImage(item.image)); setSelectedFile(null);
-    setEditorRevision((current) => current + 1); setEditorOpen(true);
+    setEditorProductId(item.id);
+    resetImages(uniqueImages(item).map((src, index) => ({ id: `existing-${index}-${src}`, src })));
+    setEditorRevision((current) => current + 1);
+    setEditorOpen(true);
   }
+
   function closeEditor() {
-    if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview);
-    setEditorOpen(false); setPreview(null); setSelectedFile(null);
+    revokePendingImages(images);
+    setEditorOpen(false);
+    setImages([]);
+    if (fileRef.current) fileRef.current.value = "";
   }
-  function chooseImage(file?: File) {
-    if (!file) return;
-    if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview);
-    setSelectedFile(file); setPreview(URL.createObjectURL(file));
+
+  function chooseImages(files?: FileList | null) {
+    const availableSlots = Math.max(0, MAX_PRODUCT_IMAGES - images.length);
+    const selected = Array.from(files || [])
+      .filter((file) => file.type.startsWith("image/"))
+      .slice(0, availableSlots);
+    if (!selected.length) {
+      if (files?.length) notify(`A product can contain up to ${MAX_PRODUCT_IMAGES} images.`);
+      return;
+    }
+    const additions = selected.map((file) => ({
+      id: `new-${crypto.randomUUID()}`,
+      src: URL.createObjectURL(file),
+      file,
+    }));
+    setImages((current) => [...current, ...additions]);
+    if ((files?.length || 0) > selected.length) {
+      notify(`Only the first ${availableSlots} selected images were added.`);
+    }
+    if (fileRef.current) fileRef.current.value = "";
+  }
+
+  function removeImage(id: string) {
+    setImages((current) => {
+      const entry = current.find((candidate) => candidate.id === id);
+      if (entry?.file && entry.src.startsWith("blob:")) URL.revokeObjectURL(entry.src);
+      return current.filter((candidate) => candidate.id !== id);
+    });
+  }
+
+  function moveImage(index: number, direction: -1 | 1) {
+    setImages((current) => {
+      const target = index + direction;
+      if (target < 0 || target >= current.length) return current;
+      const next = [...current];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
   }
 
   async function uploadFile(file: File) {
-    const form = new FormData(); form.set("file", file);
-    return responseJson<{ media: MediaItem }>(await fetch("/api/admin/media", { method: "POST", body: form }));
-  }
-
-  async function addMedia(files?: FileList | null) {
-    const validFiles = Array.from(files || []).filter((file) => file.type.startsWith("image/"));
-    if (!validFiles.length) return;
-    setBusy(true);
-    try {
-      const additions: MediaItem[] = [];
-      for (const file of validFiles) additions.push((await uploadFile(file)).media);
-      setMediaItems((current) => [...additions, ...current]);
-      notify(`${additions.length} media file${additions.length === 1 ? "" : "s"} uploaded to Supabase Storage.`);
-    } catch (error) { notify(error instanceof Error ? error.message : "Upload failed."); }
-    finally { setBusy(false); if (mediaFileRef.current) mediaFileRef.current.value = ""; }
-  }
-
-  async function removeMedia(item: MediaItem) {
-    setBusy(true);
-    try {
-      await responseJson(await fetch(`/api/admin/media?path=${encodeURIComponent(item.path)}`, { method: "DELETE" }));
-      setMediaItems((current) => current.filter((candidate) => candidate.path !== item.path));
-      notify("Media removed from Supabase Storage.");
-    } catch (error) { notify(error instanceof Error ? error.message : "Unable to remove media."); }
-    finally { setBusy(false); }
+    const uploadFile = await optimizeImageForUpload(file);
+    const form = new FormData();
+    form.set("file", uploadFile);
+    return responseJson<{ media: MediaItem }>(
+      await fetch("/api/admin/media", { method: "POST", body: form }),
+    );
   }
 
   async function saveProduct(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setBusy(true);
+    event.preventDefault();
+    setBusy(true);
     const data = new FormData(event.currentTarget);
     const name = String(data.get("name") || "").trim();
     const partNumber = String(data.get("partNumber") || "").trim();
     const slug = slugifyProduct(String(data.get("slug") || "").trim() || `${partNumber}-${name}`);
+
     try {
-      let imageUrl = editorProduct?.image || productCardImages.control;
-      if (selectedFile) {
-        const uploaded = await uploadFile(selectedFile);
-        imageUrl = uploaded.media.imageUrl;
-        setMediaItems((current) => [uploaded.media, ...current]);
+      const uploadedImages: string[] = [];
+      for (const entry of images) {
+        if (entry.file) uploadedImages.push((await uploadFile(entry.file)).media.imageUrl);
+        else uploadedImages.push(entry.src);
       }
+      const finalImages = [...new Set(uploadedImages.filter(Boolean))];
+      const primaryImage = finalImages[0] || editorProduct?.image || productCardImages.server;
       const record: ManagedProduct = {
         id: editorProduct?.id || `${slug}-${crypto.randomUUID().slice(0, 8)}`,
-        slug, name, partNumber,
+        slug,
+        name,
+        partNumber,
         manufacturerOrFamily: String(data.get("family") || "").trim() || "Unassigned family",
         category: String(data.get("category") || categories[0]),
         shortDescription: String(data.get("shortDescription") || "").trim(),
@@ -183,92 +260,163 @@ export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: stri
         repairSupported: data.get("repairSupported") === "on",
         typicalFaults: lines(data.get("typicalFaults")),
         repairCapabilities: lines(data.get("repairCapabilities")),
-        leadTimeText: String(data.get("leadTimeText") || "").trim() || "Turnaround confirmed after evaluation",
-        warrantyText: String(data.get("warrantyText") || "").trim() || "Warranty options available",
-        image: imageUrl,
-        gallery: imageUrl ? [imageUrl, ...(editorProduct?.gallery || []).filter((item) => item !== editorProduct?.image && item !== imageUrl)] : [],
-        specifications: editorProduct?.specifications || {},
-        relatedProductIds: editorProduct?.relatedProductIds || [],
+        leadTimeText: String(data.get("leadTimeText") || "").trim() || "Availability and delivery confirmed before order",
+        warrantyText: String(data.get("warrantyText") || "").trim() || "Warranty confirmed before order",
+        image: primaryImage,
+        gallery: finalImages.length ? finalImages : [primaryImage],
+        specifications: parseSpecifications(data.get("specifications")),
+        relatedProductIds: relatedIds(data.get("relatedProductIds")),
         featured: data.get("featured") === "on",
-        primaryProduct: editorProduct?.primaryProduct || false,
+        primaryProduct: data.get("primaryProduct") === "on",
         status: data.get("status") === "published" ? "published" : "draft",
-        sortOrder: editorProduct?.sortOrder ?? items.length,
+        sortOrder: Number.isFinite(Number(data.get("sortOrder")))
+          ? Number(data.get("sortOrder"))
+          : editorProduct?.sortOrder ?? items.length,
       };
       const method = editorProduct ? "PATCH" : "POST";
-      const body = await responseJson<{ product: ManagedProduct }>(await fetch("/api/admin/products", {
-        method, headers: { "content-type": "application/json" }, body: JSON.stringify(record),
-      }));
-      setItems((current) => editorProduct ? current.map((item) => item.id === body.product.id ? body.product : item) : [body.product, ...current]);
-      closeEditor(); notify(editorProduct ? "Product updated in the live database." : "Product created in the live database.");
-    } catch (error) { notify(error instanceof Error ? error.message : "Unable to save the product."); }
-    finally { setBusy(false); }
+      const body = await responseJson<{ product: ManagedProduct }>(
+        await fetch("/api/admin/products", {
+          method,
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(record),
+        }),
+      );
+      setItems((current) =>
+        editorProduct
+          ? current.map((item) => (item.id === body.product.id ? body.product : item))
+          : [body.product, ...current],
+      );
+      closeEditor();
+      notify(editorProduct ? "Product updated successfully." : "Product created successfully.");
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "Unable to save the product.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function confirmDelete() {
     if (!pendingDelete) return;
     setBusy(true);
     try {
-      await responseJson(await fetch(`/api/admin/products?id=${encodeURIComponent(pendingDelete.id)}`, { method: "DELETE" }));
+      await responseJson(
+        await fetch(`/api/admin/products?id=${encodeURIComponent(pendingDelete.id)}`, { method: "DELETE" }),
+      );
       setItems((current) => current.filter((item) => item.id !== pendingDelete.id));
       if (editorProductId === pendingDelete.id) closeEditor();
-      setPendingDelete(null); notify("Product permanently deleted from the catalog database.");
-    } catch (error) { notify(error instanceof Error ? error.message : "Unable to delete the product."); }
-    finally { setBusy(false); }
+      setPendingDelete(null);
+      notify("Product permanently deleted.");
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "Unable to delete the product.");
+    } finally {
+      setBusy(false);
+    }
   }
-
-  const pageTitle = activeTab === "products" ? "Product records" : activeTab === "media" ? "Media library" : "Workspace settings";
-  const pageLabel = activeTab === "products" ? "Live catalog" : activeTab === "media" ? "Supabase Storage" : "Production configuration";
 
   return <main className="admin-shell">
     <aside className="admin-rail">
-      <Link className="admin-brand" href="/"><span>GWS</span><div><strong>GLOBAL WHITE STAR</strong><small>CONTENT STUDIO</small></div></Link>
+      <Link className="admin-brand" href="/">
+        <span>GWS</span>
+        <div><strong>GLOBAL WHITE STAR</strong><small>PRODUCT STUDIO</small></div>
+      </Link>
       <nav aria-label="Admin navigation">
-        <button type="button" className={activeTab === "products" ? "active" : ""} onClick={() => switchTab("products")}><LayoutGrid /> Products <span>{items.length}</span></button>
-        <button type="button" className={activeTab === "media" ? "active" : ""} onClick={() => switchTab("media")}><FileImage /> Media <span>{mediaItems.length}</span></button>
-        <button type="button" className={activeTab === "settings" ? "active" : ""} onClick={() => switchTab("settings")}><Settings2 /> Settings <small>Live</small></button>
+        <button type="button" className="active"><LayoutGrid /> Products <span>{items.length}</span></button>
       </nav>
-      <div className="admin-phase"><ShieldCheck /><div><strong>Secure live workspace</strong><p>Products publish through the protected server API. Images are stored permanently in Supabase.</p></div></div>
+      <div className="admin-phase">
+        <ShieldCheck />
+        <div><strong>Secure product workspace</strong><p>Create, edit, publish, and delete products through the protected catalog API.</p></div>
+      </div>
       <Link className="admin-back" href="/"><ArrowLeft /> Return to website</Link>
     </aside>
 
     <section className="admin-workspace">
-      <header className="admin-topbar"><div><span>{pageLabel} / {viewerName}</span><h1>{pageTitle}</h1></div>
-        {activeTab === "products" && <button className="admin-new" type="button" onClick={openNewProduct}><PackagePlus /> New product</button>}
-        {activeTab === "media" && <><input ref={mediaFileRef} className="admin-hidden-input" type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple onChange={(event) => void addMedia(event.target.files)} /><button className="admin-new" type="button" disabled={busy} onClick={() => mediaFileRef.current?.click()}><Upload /> Upload media</button></>}
+      <header className="admin-topbar">
+        <div><span>Live catalog / {viewerName}</span><h1>Products</h1></div>
+        <button className="admin-new" type="button" onClick={openNewProduct}><PackagePlus /> New product</button>
       </header>
-      <div className="admin-status-line"><span><i /> {loading ? "Syncing Supabase" : "Supabase connected"}</span><p>Published records appear on the public website immediately. Drafts remain visible only in Content Studio.</p></div>
+      <div className="admin-status-line">
+        <span><i /> {loading ? "Loading products" : "Catalog connected"}</span>
+        <p>Published records appear on the public website. Drafts remain private to the product studio.</p>
+      </div>
       {notice && <div className="admin-toast" role="status"><Check /> {notice}</div>}
 
-      {activeTab === "products" && <>
-        <div className="admin-metrics"><article><span>Database records</span><strong>{items.length}</strong><small>Drafts + published products</small></article><article><span>Published</span><strong>{items.filter((item) => item.status === "published").length}</strong><small>Visible on the public catalog</small></article><article><span>Drafts</span><strong>{items.filter((item) => item.status === "draft").length}</strong><small>Private to Content Studio</small></article></div>
-        <section className={`admin-catalog ${settings.compactRows ? "is-compact" : ""}`}>
-          <div className="admin-catalog-head"><div className="admin-search"><Search /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search product or part number…" aria-label="Search admin products" /></div><span>{loading ? "Loading…" : `${visibleItems.length} records`}</span></div>
-          <div className="admin-table" role="table" aria-label="Product records"><div className="admin-table-row admin-table-labels" role="row"><span>Product</span><span>Identity</span><span>Category</span><span>Status</span><span>Actions</span></div>
-            {visibleItems.map((item) => <div className="admin-table-row" role="row" key={item.id}><div className="admin-product-cell"><SiteImage src={resolveProductImage(item.image)} alt="" width={88} height={66} /><div><strong>{item.name}</strong><small>{item.shortDescription}</small></div></div><div><strong>{item.partNumber}</strong><small>{item.manufacturerOrFamily}</small></div><span>{item.category}</span><span className={`admin-record-status ${item.status}`}>{item.status}</span><div className="admin-row-actions"><button type="button" onClick={() => openEditProduct(item)} aria-label={`Edit ${item.name}`}><Pencil /></button><button className="danger" type="button" onClick={() => setPendingDelete(item)} aria-label={`Delete ${item.name}`}><Trash2 /></button></div></div>)}
-            {!visibleItems.length && <div className="admin-empty"><Search /><strong>No matching products</strong><p>Try another product name, family, or part number.</p></div>}
-          </div>
-        </section>
-      </>}
+      <div className="admin-metrics">
+        <article><span>Product records</span><strong>{items.length}</strong><small>Drafts and published products</small></article>
+        <article><span>Published</span><strong>{items.filter((item) => item.status === "published").length}</strong><small>Visible in the public catalog</small></article>
+        <article><span>Drafts</span><strong>{items.filter((item) => item.status === "draft").length}</strong><small>Private product records</small></article>
+      </div>
 
-      {activeTab === "media" && <section className="admin-media-section"><div className="admin-section-heading"><div><span>Permanent assets</span><h2>Product photography</h2></div><p>JPG, PNG, WebP and AVIF files up to 10 MB. Assets are stored in the public product-images bucket.</p></div>
-        <div className="admin-media-grid">{mediaItems.map((item) => <article key={item.path}><div><SiteImage src={item.imageUrl} alt={item.name} width={1200} height={900} /><button type="button" disabled={busy} onClick={() => void removeMedia(item)} aria-label={`Remove ${item.name}`}><Trash2 /></button></div><span>SUPABASE STORAGE</span><strong>{item.name}</strong><small>Permanent catalog asset</small></article>)}</div>
-        {!mediaItems.length && <div className="admin-media-drop"><ImagePlus /><div><strong>Add product photography</strong><p>Uploaded files become permanent media and can be assigned while editing products.</p></div><button type="button" onClick={() => mediaFileRef.current?.click()}><Upload /> Select images</button></div>}
-      </section>}
-
-      {activeTab === "settings" && <section className="admin-settings-grid">
-        <article className="admin-setting-card"><header><Database /><div><span>Database</span><h2>Supabase catalog</h2></div></header><p>Products, publication status, technical content, and ordering are stored in PostgreSQL with row-level security.</p><div className="admin-setting-state"><Check /> Server connection enabled</div></article>
-        <article className="admin-setting-card"><header><HardDrive /><div><span>Media</span><h2>Permanent Storage</h2></div></header><p>Product images are uploaded through the protected admin API to the product-images bucket.</p><div className="admin-setting-state"><Check /> Storage connected</div></article>
-        <article className="admin-setting-card admin-setting-controls"><header><Settings2 /><div><span>Editor defaults</span><h2>Workspace preferences</h2></div></header><div className="admin-setting-row"><div><strong>Available to order by default</strong><small>Preselect order availability for new products.</small></div><button type="button" role="switch" aria-checked={settings.defaultRepairSupported} className={`admin-switch ${settings.defaultRepairSupported ? "is-on" : ""}`} onClick={() => setSettings((current) => ({ ...current, defaultRepairSupported: !current.defaultRepairSupported }))}><span /></button></div><div className="admin-setting-row"><div><strong>Compact product rows</strong><small>Show a denser catalog table.</small></div><button type="button" role="switch" aria-checked={settings.compactRows} className={`admin-switch ${settings.compactRows ? "is-on" : ""}`} onClick={() => setSettings((current) => ({ ...current, compactRows: !current.compactRows }))}><span /></button></div></article>
-        <article className="admin-setting-card"><header><RefreshCw /><div><span>Synchronization</span><h2>Refresh workspace</h2></div></header><p>Reload product records and media directly from Supabase without changing any content.</p><button type="button" disabled={loading} onClick={() => void refreshWorkspace()}><RefreshCw /> Refresh now</button></article>
-      </section>}
+      <section className="admin-catalog">
+        <div className="admin-catalog-head">
+          <div className="admin-search"><Search /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search product, family, category, or part number…" aria-label="Search products" /></div>
+          <span>{loading ? "Loading…" : `${visibleItems.length} records`}</span>
+        </div>
+        <div className="admin-table" role="table" aria-label="Product records">
+          <div className="admin-table-row admin-table-labels" role="row"><span>Product</span><span>Identity</span><span>Category</span><span>Status</span><span>Actions</span></div>
+          {visibleItems.map((item) => <div className="admin-table-row" role="row" key={item.id}>
+            <div className="admin-product-cell"><SiteImage src={resolveProductImage(item.image)} alt="" width={88} height={66} /><div><strong>{item.name}</strong><small>{item.shortDescription}</small></div></div>
+            <div><strong>{item.partNumber}</strong><small>{item.manufacturerOrFamily}</small></div>
+            <span>{item.category}</span>
+            <span className={`admin-record-status ${item.status}`}>{item.status}</span>
+            <div className="admin-row-actions"><button type="button" onClick={() => openEditProduct(item)} aria-label={`Edit ${item.name}`}><Pencil /></button><button className="danger" type="button" onClick={() => setPendingDelete(item)} aria-label={`Delete ${item.name}`}><Trash2 /></button></div>
+          </div>)}
+          {!visibleItems.length && <div className="admin-empty"><Search /><strong>No matching products</strong><p>Try another name, family, category, or part number.</p></div>}
+        </div>
+      </section>
     </section>
 
-    <div className={`admin-editor-layer ${editorOpen ? "is-open" : ""}`} aria-hidden={!editorOpen}><button className="admin-editor-backdrop" onClick={closeEditor} aria-label="Close product editor" /><aside className="admin-editor" role="dialog" aria-modal="true" aria-label={editorProduct ? "Edit product" : "New product editor"}><header><div><span>{editorProduct ? `Editing ${editorProduct.partNumber}` : "New catalog record"}</span><h2>{editorProduct ? "Update product" : "Add a product"}</h2></div><button type="button" onClick={closeEditor} aria-label="Close product editor"><X /></button></header>
-      <form key={`${editorProductId || "new"}-${editorRevision}`} onSubmit={(event) => void saveProduct(event)}><label className="admin-image-upload"><input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/avif" onChange={(event) => chooseImage(event.target.files?.[0])} />{preview ? <SiteImage src={preview} alt="Selected product preview" fill /> : <><ImagePlus /><strong>Add product image</strong><span>JPG, PNG, WebP or AVIF · max 10 MB</span></>}<button type="button" onClick={() => fileRef.current?.click()}><Upload /> {preview ? "Replace image" : "Select image"}</button></label>
-        <div className="admin-form-grid"><label><span>Product name *</span><input name="name" required defaultValue={editorProduct?.name} /></label><label><span>Part number *</span><input name="partNumber" required defaultValue={editorProduct?.partNumber} /></label><label className="admin-form-wide"><span>URL slug</span><input name="slug" defaultValue={editorProduct?.slug} placeholder="Automatically generated when left empty" /></label><label><span>Product family</span><input name="family" defaultValue={editorProduct?.manufacturerOrFamily} /></label><label><span>Category</span><select name="category" defaultValue={editorProduct?.category || categories[0]}>{editorCategories.map((category) => <option key={category}>{category}</option>)}</select></label><label><span>Publication</span><select name="status" defaultValue={editorProduct?.status || "draft"}><option value="draft">Draft — private</option><option value="published">Published — live</option></select></label><label><span>Lead time</span><input name="leadTimeText" defaultValue={editorProduct?.leadTimeText} /></label><label className="admin-form-wide"><span>Short description</span><textarea name="shortDescription" rows={3} defaultValue={editorProduct?.shortDescription} /></label><label className="admin-form-wide"><span>Full description</span><textarea name="longDescription" rows={5} defaultValue={editorProduct?.longDescription} /></label><label><span>Product highlights · one per line</span><textarea name="typicalFaults" rows={5} defaultValue={editorProduct?.typicalFaults.join("\n")} /></label><label><span>Suitable applications · one per line</span><textarea name="repairCapabilities" rows={5} defaultValue={editorProduct?.repairCapabilities.join("\n")} /></label><label className="admin-form-wide"><span>Warranty</span><input name="warrantyText" defaultValue={editorProduct?.warrantyText} /></label><label className="admin-check"><input name="repairSupported" type="checkbox" defaultChecked={editorProduct?.repairSupported ?? settings.defaultRepairSupported} /><span>Available to order</span></label><label className="admin-check"><input name="featured" type="checkbox" defaultChecked={editorProduct?.featured ?? false} /><span>Feature on catalog surfaces</span></label></div>
-        <div className="admin-editor-note"><CircleDashed /><p><strong>Live workspace:</strong> Saving writes directly to Supabase. Published records become public; drafts remain private.</p></div><footer>{editorProduct && <button className="admin-delete-action" type="button" onClick={() => setPendingDelete(editorProduct)}><Trash2 /> Delete product</button>}<span /><button type="button" onClick={closeEditor}>Cancel</button><button className="admin-save" disabled={busy} type="submit"><Check /> {busy ? "Saving…" : editorProduct ? "Save changes" : "Create product"}</button></footer>
-      </form></aside></div>
+    <div className={`admin-editor-layer ${editorOpen ? "is-open" : ""}`} aria-hidden={!editorOpen}>
+      <button className="admin-editor-backdrop" onClick={closeEditor} aria-label="Close product editor" />
+      <aside className="admin-editor" role="dialog" aria-modal="true" aria-label={editorProduct ? "Edit product" : "New product editor"}>
+        <header><div><span>{editorProduct ? `Editing ${editorProduct.partNumber}` : "New catalog record"}</span><h2>{editorProduct ? "Update product" : "Add a product"}</h2></div><button type="button" onClick={closeEditor} aria-label="Close product editor"><X /></button></header>
+        <form key={`${editorProductId || "new"}-${editorRevision}`} onSubmit={(event) => void saveProduct(event)}>
+          <section className="admin-gallery-editor">
+            <div className="admin-gallery-heading">
+              <div><strong>Product images</strong><span>Upload up to {MAX_PRODUCT_IMAGES} images. The first image is the primary catalog image.</span></div>
+              <input ref={fileRef} className="admin-hidden-input" type="file" accept="image/jpeg,image/png,image/webp,image/avif" multiple onChange={(event) => chooseImages(event.target.files)} />
+              <button type="button" disabled={images.length >= MAX_PRODUCT_IMAGES} onClick={() => fileRef.current?.click()}><Upload /> Add images</button>
+            </div>
+            {images.length ? <div className="admin-gallery-grid">{images.map((entry, index) => <article key={entry.id} className={index === 0 ? "is-primary" : ""}>
+              <SiteImage src={entry.src} alt={`Product image ${index + 1}`} fill />
+              <span>{index === 0 ? "Primary" : `Image ${index + 1}`}</span>
+              <div><button type="button" disabled={index === 0} onClick={() => moveImage(index, -1)} aria-label="Move image earlier"><ArrowUp /></button><button type="button" disabled={index === images.length - 1} onClick={() => moveImage(index, 1)} aria-label="Move image later"><ArrowDown /></button><button type="button" onClick={() => removeImage(entry.id)} aria-label="Remove image"><Trash2 /></button></div>
+            </article>)}</div> : <button className="admin-gallery-empty" type="button" onClick={() => fileRef.current?.click()}><ImagePlus /><strong>Add product images</strong><span>JPG, PNG, WebP, or AVIF · maximum 10 MB per image</span></button>}
+          </section>
 
-    {pendingDelete && <div className="admin-confirm-layer"><button className="admin-confirm-backdrop" type="button" onClick={() => setPendingDelete(null)} aria-label="Cancel deletion" /><div className="admin-confirm" role="alertdialog" aria-modal="true" aria-labelledby="delete-product-title"><span><Trash2 /></span><div><small>Permanent action</small><h2 id="delete-product-title">Delete {pendingDelete.partNumber}?</h2><p>This permanently removes <strong>{pendingDelete.name}</strong> from Supabase and the public catalog. Its media files remain available in the Media library.</p></div><footer><button type="button" onClick={() => setPendingDelete(null)}>Keep product</button><button className="danger" disabled={busy} type="button" onClick={() => void confirmDelete()}><Trash2 /> {busy ? "Deleting…" : "Delete product"}</button></footer></div></div>}
+          <div className="admin-form-grid">
+            <label><span>Product name *</span><input name="name" required defaultValue={editorProduct?.name} /></label>
+            <label><span>Part number *</span><input name="partNumber" required defaultValue={editorProduct?.partNumber} /></label>
+            <label className="admin-form-wide"><span>URL slug</span><input name="slug" defaultValue={editorProduct?.slug} placeholder="Generated automatically when left empty" /></label>
+            <label><span>Product family</span><input name="family" defaultValue={editorProduct?.manufacturerOrFamily} placeholder="Example: Enterprise Memory" /></label>
+            <label><span>Category</span><select name="category" defaultValue={editorProduct?.category || categories[0]}>{editorCategories.map((category) => <option key={category}>{category}</option>)}</select></label>
+            <label><span>Publication status</span><select name="status" defaultValue={editorProduct?.status || "draft"}><option value="draft">Draft — private</option><option value="published">Published — live</option></select></label>
+            <label><span>Catalog sort order</span><input name="sortOrder" type="number" min="0" step="1" defaultValue={editorProduct?.sortOrder ?? items.length} /></label>
+            <label className="admin-form-wide"><span>Short description *</span><textarea name="shortDescription" required rows={3} defaultValue={editorProduct?.shortDescription} placeholder="A concise summary used on product cards." /></label>
+            <label className="admin-form-wide"><span>Full description *</span><textarea name="longDescription" required rows={6} defaultValue={editorProduct?.longDescription} placeholder="Describe the product, compatibility, configuration options, and ordering details." /></label>
+            <label><span>Product highlights · one per line</span><textarea name="typicalFaults" rows={6} defaultValue={editorProduct?.typicalFaults.join("\n")} placeholder={"64 GB capacity\nECC error correction\nRegistered DIMM"} /></label>
+            <label><span>Suitable applications · one per line</span><textarea name="repairCapabilities" rows={6} defaultValue={editorProduct?.repairCapabilities.join("\n")} placeholder={"Rack servers\nVirtualization hosts\nProfessional workstations"} /></label>
+            <label className="admin-form-wide"><span>Technical specifications · one “Name | Value” pair per line</span><textarea name="specifications" rows={7} defaultValue={specificationLines(editorProduct?.specifications || {})} placeholder={"Capacity | 64 GB\nMemory type | DDR5 ECC RDIMM\nSpeed | Configuration dependent"} /></label>
+            <label><span>Availability and delivery</span><input name="leadTimeText" defaultValue={editorProduct?.leadTimeText} placeholder="Confirmed before order" /></label>
+            <label><span>Warranty</span><input name="warrantyText" defaultValue={editorProduct?.warrantyText} placeholder="Product-specific warranty" /></label>
+            <label className="admin-form-wide"><span>Related product IDs · one per line</span><textarea name="relatedProductIds" rows={4} defaultValue={editorProduct?.relatedProductIds.join("\n")} placeholder={"ram-ecc-64\nssd-u3-384"} /></label>
+            <label className="admin-check"><input name="repairSupported" type="checkbox" defaultChecked={editorProduct?.repairSupported ?? true} /><span>Available to order</span></label>
+            <label className="admin-check"><input name="featured" type="checkbox" defaultChecked={editorProduct?.featured ?? false} /><span>Feature this product on catalog surfaces</span></label>
+            <label className="admin-check"><input name="primaryProduct" type="checkbox" defaultChecked={editorProduct?.primaryProduct ?? false} /><span>Use as the primary homepage product</span></label>
+          </div>
+
+          <div className="admin-editor-note"><CircleDashed /><p><strong>Live product workflow:</strong> Saving writes to the protected catalog database. Published records become public; drafts remain private.</p></div>
+          <footer>{editorProduct && <button className="admin-delete-action" type="button" onClick={() => setPendingDelete(editorProduct)}><Trash2 /> Delete product</button>}<span /><button type="button" onClick={closeEditor}>Cancel</button><button className="admin-save" disabled={busy} type="submit"><Check /> {busy ? "Saving…" : editorProduct ? "Save changes" : "Create product"}</button></footer>
+        </form>
+      </aside>
+    </div>
+
+    {pendingDelete && <div className="admin-confirm-layer">
+      <button className="admin-confirm-backdrop" type="button" onClick={() => setPendingDelete(null)} aria-label="Cancel deletion" />
+      <div className="admin-confirm" role="alertdialog" aria-modal="true" aria-labelledby="delete-product-title">
+        <span><Trash2 /></span>
+        <div><small>Permanent action</small><h2 id="delete-product-title">Delete {pendingDelete.partNumber}?</h2><p>This permanently removes <strong>{pendingDelete.name}</strong> from the product database and public catalog. Uploaded image files are retained to prevent accidental removal of shared assets.</p></div>
+        <footer><button type="button" onClick={() => setPendingDelete(null)}>Keep product</button><button className="danger" disabled={busy} type="button" onClick={() => void confirmDelete()}><Trash2 /> {busy ? "Deleting…" : "Delete product"}</button></footer>
+      </div>
+    </div>}
   </main>;
 }

@@ -1,5 +1,6 @@
 import { requireAdminApiAccess } from "../../../../lib/admin-auth";
-import { productToRow, rowToProduct, type ManagedProduct, type ProductRow } from "../../../../lib/catalog";
+import { fallbackManagedProducts, productToRow, rowToProduct, type ManagedProduct, type ProductRow } from "../../../../lib/catalog";
+import { categories } from "../../../../lib/products";
 import { createAdminSupabaseClient } from "../../../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -9,6 +10,7 @@ function validProduct(input: unknown): input is ManagedProduct {
   const product = input as Partial<ManagedProduct>;
   return Boolean(
     product.id && product.slug && product.name && product.partNumber && product.category &&
+    categories.some((category) => category === product.category) &&
     (product.status === "draft" || product.status === "published") &&
     Array.isArray(product.typicalFaults) && Array.isArray(product.repairCapabilities),
   );
@@ -19,13 +21,23 @@ export async function GET() {
   if ("response" in access) return access.response;
 
   try {
-    const { data, error } = await createAdminSupabaseClient()
+    const supabase = createAdminSupabaseClient();
+    const { data, error } = await supabase
       .from("products")
       .select("*")
+      .in("category", [...categories])
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true });
     if (error) throw error;
-    return Response.json({ products: (data as ProductRow[]).map(rowToProduct) });
+    if (data?.length) return Response.json({ products: (data as ProductRow[]).map(rowToProduct) });
+
+    const seedRows = fallbackManagedProducts().map(productToRow);
+    const { data: seeded, error: seedError } = await supabase
+      .from("products")
+      .upsert(seedRows, { onConflict: "id" })
+      .select("*");
+    if (seedError) throw seedError;
+    return Response.json({ products: (seeded as ProductRow[]).map(rowToProduct).sort((a, b) => a.sortOrder - b.sortOrder) });
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "Unable to load products." }, { status: 500 });
   }

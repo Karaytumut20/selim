@@ -1,4 +1,5 @@
-import { products as fallbackProducts, type Product } from "./products";
+import { categories, products as fallbackProducts, type Product } from "./products";
+import { createPublicSupabaseClient } from "./supabase/server";
 
 export type ProductStatus = "draft" | "published";
 
@@ -93,10 +94,39 @@ export function fallbackManagedProducts(): ManagedProduct[] {
 }
 
 export async function getPublishedProducts(): Promise<ManagedProduct[]> {
-  return fallbackManagedProducts();
+  const supabase = createPublicSupabaseClient();
+  if (!supabase) return fallbackManagedProducts();
+
+  try {
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("status", "published")
+      .in("category", [...categories])
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+    if (error) throw error;
+    return (data as ProductRow[] | null)?.map(rowToProduct) || [];
+  } catch {
+    return fallbackManagedProducts();
+  }
 }
 
 export async function getPublishedProduct(slug: string): Promise<ManagedProduct | undefined> {
+  const supabase = createPublicSupabaseClient();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("slug", slug)
+        .eq("status", "published")
+        .in("category", [...categories])
+        .maybeSingle();
+      if (error) throw error;
+      return data ? rowToProduct(data as ProductRow) : undefined;
+    } catch {}
+  }
   return fallbackManagedProducts().find((product) => product.slug === slug);
 }
 
