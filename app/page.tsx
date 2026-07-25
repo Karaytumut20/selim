@@ -106,12 +106,20 @@ export default async function Home() {
             </div>
           </div>
           <div className="commerce-hero-product">
-            <SiteImage src={resolveProductImage(primaryProduct.image)} alt={primaryProduct.name} width={1200} height={900} priority />
+            <SiteImage
+              src="/images/hero-enterprise-servers.png"
+              alt="Enterprise Server & Data Center Infrastructure"
+              width={1200}
+              height={900}
+              priority
+            />
             <div className="hero-product-overlay">
-              <span>Featured product</span>
-              <strong>{primaryProduct.name}</strong>
-              <small>{primaryProduct.partNumber} · {formatProductPrice(primaryProduct)}</small>
-              <a href={buildProductOrderUrl(primaryProduct)} target="_blank" rel="noopener noreferrer">{hasProductPrice(primaryProduct) ? "Buy on WhatsApp" : "Request a quote"} <ArrowRight /></a>
+              <span>Featured Sector Solution</span>
+              <strong>Enterprise Server Infrastructure</strong>
+              <small>Rack & Tower Servers · High-Performance Hardware</small>
+              <a href={buildProductOrderUrl(primaryProduct)} target="_blank" rel="noopener noreferrer">
+                {hasProductPrice(primaryProduct) ? "Buy on WhatsApp" : "Request a quote"} <ArrowRight />
+              </a>
             </div>
           </div>
         </div>
