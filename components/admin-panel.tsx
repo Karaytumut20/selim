@@ -92,6 +92,8 @@ export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: stri
   const [catalogCategories, setCatalogCategories] = useState<string[]>([...categories]);
   const [newCategory, setNewCategory] = useState("");
   const [categoryBusy, setCategoryBusy] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<string | null>(null);
+  const [editedCategoryName, setEditedCategoryName] = useState("");
   const [pendingDelete, setPendingDelete] = useState<ManagedProduct | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -175,6 +177,44 @@ export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: stri
       notify(`Category “${name}” removed.`);
     } catch (error) {
       notify(error instanceof Error ? error.message : "Unable to remove category.");
+    } finally {
+      setCategoryBusy(false);
+    }
+  }
+
+  function startCategoryEdit(name: string) {
+    setEditingCategory(name);
+    setEditedCategoryName(name);
+  }
+
+  function cancelCategoryEdit() {
+    setEditingCategory(null);
+    setEditedCategoryName("");
+  }
+
+  async function renameCategory(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editingCategory) return;
+    const newName = editedCategoryName.replace(/\s+/g, " ").trim();
+    if (!newName) return;
+    setCategoryBusy(true);
+    try {
+      const body = await responseJson<{ categories: string[]; updatedProductIds: string[] }>(
+        await fetch("/api/admin/categories", {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ currentName: editingCategory, newName }),
+        }),
+      );
+      const previousName = editingCategory;
+      setCatalogCategories(body.categories);
+      setItems((current) => current.map((item) =>
+        body.updatedProductIds.includes(item.id) ? { ...item, category: newName } : item
+      ));
+      cancelCategoryEdit();
+      notify(`Category “${previousName}” renamed to “${newName}”.`);
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "Unable to rename category.");
     } finally {
       setCategoryBusy(false);
     }
@@ -398,10 +438,12 @@ export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: stri
       </div>
 
       <section className="admin-category-manager">
-        <div className="admin-category-heading"><div><Tags /><span><strong>Product categories</strong><small>Add categories here, then assign them in the product editor.</small></span></div><form onSubmit={(event) => void addCategory(event)}><input value={newCategory} onChange={(event) => setNewCategory(event.target.value)} maxLength={80} placeholder="New category name" aria-label="New category name" /><button type="submit" disabled={categoryBusy || !newCategory.trim()}><Plus /> Add category</button></form></div>
+        <div className="admin-category-heading"><div><Tags /><span><strong>Product categories</strong><small>Add, rename, or remove categories. Renaming also updates every assigned product.</small></span></div><form onSubmit={(event) => void addCategory(event)}><input value={newCategory} onChange={(event) => setNewCategory(event.target.value)} maxLength={80} placeholder="New category name" aria-label="New category name" /><button type="submit" disabled={categoryBusy || !newCategory.trim()}><Plus /> Add category</button></form></div>
         <div className="admin-category-list">{catalogCategories.map((category) => {
           const productCount = items.filter((item) => item.category === category).length;
-          return <span key={category}><strong>{category}</strong><small>{productCount} product{productCount === 1 ? "" : "s"}</small><button type="button" disabled={categoryBusy || productCount > 0} onClick={() => void removeCategory(category)} aria-label={`Remove ${category}`} title={productCount > 0 ? "Move or delete assigned products first" : `Remove ${category}`}><X /></button></span>;
+          return <article key={category} className={editingCategory === category ? "is-editing" : ""}>
+            {editingCategory === category ? <form className="admin-category-edit-form" onSubmit={(event) => void renameCategory(event)}><input autoFocus value={editedCategoryName} onChange={(event) => setEditedCategoryName(event.target.value)} maxLength={80} aria-label={`New name for ${category}`} /><button className="save" type="submit" disabled={categoryBusy || !editedCategoryName.trim()}><Check /> Save</button><button type="button" onClick={cancelCategoryEdit}><X /> Cancel</button></form> : <><span><strong>{category}</strong><small>{productCount} product{productCount === 1 ? "" : "s"}</small></span><button className="edit" type="button" disabled={categoryBusy} onClick={() => startCategoryEdit(category)}><Pencil /> Edit</button><button className="remove" type="button" disabled={categoryBusy || productCount > 0} onClick={() => void removeCategory(category)} aria-label={`Remove ${category}`} title={productCount > 0 ? "Move or delete assigned products first" : `Remove ${category}`}><X /></button></>}
+          </article>;
         })}</div>
       </section>
 
