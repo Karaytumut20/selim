@@ -51,7 +51,7 @@ export default async function ProductOfferAdmin({ searchParams }: { searchParams
                   </h2>
                   <div className="admin-offer-summary">
                     <strong>{formatOfferAmount(offer.amount_cents)} <small>USD</small></strong>
-                    <span className={`admin-offer-status ${offer.status}`}>{offerStatusLabels[offer.status]}</span>
+                    <span className={`offer-status ${offer.status}`}>{offerStatusLabels[offer.status]}</span>
                   </div>
                 </div>
                 <dl className="admin-offer-details">
