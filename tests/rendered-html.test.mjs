@@ -65,7 +65,7 @@ test("an optimizer request without Cloudflare bindings fails safely", async () =
   const worker = await loadWorker();
   const response = await request(
     worker,
-    "/_vinext/image?url=%2Fimages%2Fproducts%2Fserver-rack.png&w=640&q=75",
+    "/_vinext/image?url=%2Fimages%2Fproducts%2Fserver-rack.webp&w=640&q=75",
   );
 
   assert.equal(response.status, 503);

@@ -117,10 +117,10 @@ export default async function Home() {
           </div>
           <div className="commerce-hero-product">
             <SiteImage
-              src="/images/hero-enterprise-servers.png"
+              src="/images/hero-enterprise-servers.webp"
               alt="Enterprise Server & Data Center Infrastructure"
-              width={1200}
-              height={900}
+              width={1024}
+              height={1024}
               priority
             />
             <div className="hero-product-overlay">

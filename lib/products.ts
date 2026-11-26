@@ -226,13 +226,13 @@ export const categories = [
 export const primaryProduct = products.find((product) => product.primaryProduct)!;
 
 export const productCardImages: Record<string, string> = {
-  server: "/images/products/server-rack.png",
-  ram: "/images/products/server-ram.png",
-  cpu: "/images/products/processor.png",
-  monitor: "/images/products/pro-monitor.png",
-  ssd: "/images/products/enterprise-ssd.png",
-  switch: "/images/products/network-switch.png",
-  ups: "/images/products/ups.png",
+  server: "/images/products/server-rack.webp",
+  ram: "/images/products/server-ram.webp",
+  cpu: "/images/products/processor.webp",
+  monitor: "/images/products/pro-monitor.webp",
+  ssd: "/images/products/enterprise-ssd.webp",
+  switch: "/images/products/network-switch.webp",
+  ups: "/images/products/ups.webp",
 };
 
 export function resolveProductImage(image?: string) {

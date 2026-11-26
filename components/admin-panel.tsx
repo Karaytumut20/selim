@@ -6,6 +6,7 @@ import {
   PackagePlus, Pencil, Plus, Search, Tags, Trash2, Upload, X,
 } from "lucide-react";
 import { fallbackManagedProducts, slugifyProduct, type FulfillmentField, type FulfillmentProduct } from "../lib/catalog";
+import { optimizeImageForUpload } from "../lib/product-image-upload";
 import { categories, formatProductPrice, productCardImages, resolveProductImage } from "../lib/products";
 import { SiteImage } from "./site-image";
 
@@ -54,36 +55,6 @@ function specificationLines(specifications: Record<string, string>) {
 
 function uniqueImages(product: FulfillmentProduct) {
   return [...new Set([product.image, ...product.gallery].filter(Boolean))];
-}
-
-async function optimizeImageForUpload(file: File) {
-  if (file.size <= 700 * 1024) return file;
-
-  const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, 1600 / bitmap.width, 1200 / bitmap.height);
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-  const context = canvas.getContext("2d");
-  if (!context) {
-    bitmap.close();
-    return file;
-  }
-  context.fillStyle = "#f4f3ef";
-  context.fillRect(0, 0, canvas.width, canvas.height);
-  context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
-
-  let quality = 0.84;
-  let blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
-  while (blob && blob.size > 700 * 1024 && quality > 0.54) {
-    quality -= 0.1;
-    blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
-  }
-  if (!blob) return file;
-
-  const baseName = file.name.replace(/\.[^.]+$/, "") || "product";
-  return new File([blob], `${baseName}.jpg`, { type: "image/jpeg", lastModified: file.lastModified });
 }
 
 export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: string }) {
