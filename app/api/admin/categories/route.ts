@@ -1,6 +1,6 @@
 import { requireAdminApiAccess } from "../../../../lib/admin-auth";
 import { CATEGORY_CONFIG_ID, readCategoryConfig, normalizeCategoryName, uniqueCategories, writeCategoryConfig } from "../../../../lib/category-config";
-import { isManagedCatalogRow, productToRow, rowToProduct, type ProductRow } from "../../../../lib/catalog";
+import { isManagedCatalogRow, type ProductRow } from "../../../../lib/catalog";
 import { createAdminSupabaseClient } from "../../../../lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -76,8 +76,7 @@ export async function PATCH(request: Request) {
     const catalogRows = (assignedRows as ProductRow[]).filter((row) => isManagedCatalogRow(row));
     const productIds = catalogRows.map((row) => row.id);
     if (productIds.length) {
-      const renamedRows = catalogRows.map((row) => productToRow({ ...rowToProduct(row), category: newName }));
-      const { error: updateError } = await supabase.from("products").upsert(renamedRows, { onConflict: "id" });
+      const { error: updateError } = await supabase.from("products").update({ category: newName }).in("id", productIds).eq("category", currentName);
       if (updateError) throw updateError;
     }
 

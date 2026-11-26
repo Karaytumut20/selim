@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const product = await getPublishedProduct(slug);
   if (!product) return pageMetadata({ title: "Product Not Found", description: "The requested product is not available.", path: `/products/${slug}`, noIndex: true });
-  const description = truncateMetaDescription(`${getCommerceDescription(product)} Ask for current price and availability on WhatsApp.`);
+  const description = truncateMetaDescription(`${getCommerceDescription(product)} Ask for current price and availability.`);
   return pageMetadata({
     title: product.name,
     description,
@@ -70,19 +70,23 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         <span className={`availability-badge ${product.repairSupported ? "" : "evaluation-badge"}`}><i /> {product.repairSupported ? "Available to order" : "Check availability"}</span>
         <p className="product-intro">{product.longDescription}</p>
         <div className="summary-facts"><div><span>Availability</span><strong>{product.repairSupported ? "Order inquiry open" : "Confirmation required"}</strong></div><div><span>Delivery</span><strong>Confirmed before order</strong></div></div>
-        <ProductOrderLink product={product} />
-        <a className="replacement-link" href={`tel:${siteConfig.phoneHref}`}><MessageCircle /> Speak with sales</a>
-        <div className="purchase-note"><Info /><span>{hasProductPrice(product) ? "The listed price is included in your message; stock, warranty, and delivery are confirmed before the order proceeds." : "Request the current price on WhatsApp; stock, warranty, and delivery are confirmed before the order proceeds."}</span></div>
+        <div className="offer-actions">
+          <ProductOrderLink product={product} />
+          {product.repairSupported && (product.currency ?? "USD") === "USD" &&
+            <Link className="button button-outline" href={`/products/${product.slug}/offer`}>Make an offer</Link>}
+        </div>
+        <a className="replacement-link" href={siteConfig.phoneHref ? `tel:${siteConfig.phoneHref}` : `mailto:${siteConfig.email}`}><MessageCircle /> Speak with sales</a>
+        <div className="purchase-note"><Info /><span>{hasProductPrice(product) ? "The listed price is included in your message; stock, warranty, and delivery are confirmed before the order proceeds." : "Ask sales for the current price, stock, warranty, and delivery details."}</span></div>
       </div>
     </div></div></section>
 
     <section className="product-information content-section"><div className="container product-info-layout"><div className="product-info-main">
       <section><SectionHeading eyebrow="Product overview" title="The essential information, clearly presented." /><p className="prose-lead">{product.longDescription}</p></section>
       <section><div className="product-two-column"><div><h2>Product highlights</h2><ul className="check-list">{getProductHighlights(product).map((item) => <li key={item}>{item}</li>)}</ul></div><div><h2>Suitable applications</h2><ul className="check-list">{getProductApplications(product).map((item) => <li key={item}>{item}</li>)}</ul></div></div></section>
-      <section><h2>How to order</h2><div className="compact-steps">{[[ClipboardCheck, "Select", "Confirm this is the product and code you need."], [MessageCircle, "Message", "Tap the WhatsApp button; product details are filled in."], [CheckCircle2, "Confirm", "Review price, availability, quantity, and delivery."], [Truck, "Receive", "Dispatch and tracking details are shared directly."]].map(([Icon, title, copy], index) => { const C = Icon as typeof Truck; return <article key={String(title)}><span>0{index + 1}</span><C /><h3>{String(title)}</h3><p>{String(copy)}</p></article>; })}</div></section>
+      <section><h2>How to order</h2><div className="compact-steps">{[[ClipboardCheck, "Select", "Confirm this is the product and code you need."], [MessageCircle, "Message", "Open a sales message with the product details filled in."], [CheckCircle2, "Confirm", "Review price, availability, quantity, and delivery."], [Truck, "Receive", "Dispatch and tracking details are shared directly."]].map(([Icon, title, copy], index) => { const C = Icon as typeof Truck; return <article key={String(title)}><span>0{index + 1}</span><C /><h3>{String(title)}</h3><p>{String(copy)}</p></article>; })}</div></section>
       <section><div className="product-two-column"><div><h2>Before you order</h2><ul className="check-list">{["Confirm the product code", "Choose the required quantity", "Share the delivery city and state", "Ask about compatible alternatives if needed", "Review the confirmed lead time"].map((item) => <li key={item}>{item}</li>)}</ul></div><div><h2>Order support</h2><p>Our sales team verifies the product identity and checks current commercial details before confirming the order.</p><div className="quality-note"><PackageCheck /><div><strong>Product-specific dispatch</strong><span>Packaging and delivery are coordinated for the confirmed item and destination.</span></div></div></div></div></section>
       <section><h2>Product specifications</h2><dl className="spec-table">{Object.entries(getCommerceSpecifications(product)).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{value}</dd></div>)}</dl></section>
-    </div><aside className="purchase-aside"><span className="eyebrow">Direct purchase</span><h2>{hasProductPrice(product) ? `Order ${product.partNumber} on WhatsApp.` : `Request a quote for ${product.partNumber}.`}</h2><p>The message includes the product name, code, category, price status, and this page link automatically.</p><ProductOrderLink product={product} /><small>No account or online payment required.</small><div className="aside-trust"><BadgeCheck /> Order details are confirmed by a sales representative.</div></aside></div></section>
+    </div><aside className="purchase-aside"><span className="eyebrow">Direct purchase</span><h2>{hasProductPrice(product) ? `Order ${product.partNumber} through sales.` : `Request a quote for ${product.partNumber}.`}</h2><p>The message includes the product name, code, category, price status, and this page link automatically.</p><ProductOrderLink product={product} /><small>You can contact sales without creating an account.</small><div className="aside-trust"><BadgeCheck /> Order details are confirmed by a sales representative.</div></aside></div></section>
 
     {related.length > 0 && <section className="content-section cream-section"><div className="container"><SectionHeading eyebrow="Related products" title="More products from nearby categories." /><div className="product-grid">{related.map((item) => <ProductCard product={item} key={item.id} />)}</div><div className="section-end-link"><Link href="/products">Browse complete catalog <ArrowRight /></Link></div></div></section>}
     <div className="mobile-product-cta"><div><span>{product.partNumber}</span><strong>{product.name}</strong></div><ProductOrderLink product={product} className="button button-primary" compact /></div>

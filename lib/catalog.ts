@@ -37,6 +37,32 @@ export type ProductRow = {
 
 export type ManagedProduct = Product & { status: ProductStatus; sortOrder: number; createdAt?: string; updatedAt?: string };
 
+export const fulfillmentFields = {
+  stockQuantity: "__stockQuantity",
+  shippingLengthIn: "__shippingLengthIn",
+  shippingWidthIn: "__shippingWidthIn",
+  shippingHeightIn: "__shippingHeightIn",
+  shippingWeightOz: "__shippingWeightOz",
+} as const;
+
+export type FulfillmentField = keyof typeof fulfillmentFields;
+export type FulfillmentProduct = ManagedProduct & Partial<Record<FulfillmentField, number>> & { fragile?: boolean };
+
+export function rowToFulfillmentProduct(row: ProductRow): FulfillmentProduct {
+  const specifications = row.specifications ?? {};
+  const fields = Object.entries(fulfillmentFields).flatMap(([field, key]) => {
+    const raw = specifications[key];
+    const value = raw === undefined || raw === null || String(raw).trim() === "" ? NaN : Number(raw);
+    const valid = field === "stockQuantity" ? Number.isSafeInteger(value) && value >= 0 : value > 0 && Number.isFinite(value);
+    return valid ? [[field, value]] : [];
+  });
+  return {
+    ...rowToProduct(row),
+    ...Object.fromEntries(fields),
+    fragile: /true|fragile/i.test(specifications.__fragile ?? "") || /fragile/i.test(specifications.__shippingClass ?? ""),
+  };
+}
+
 export function isManagedCatalogRow(row: Pick<ProductRow, "category" | "specifications">) {
   return row.specifications?.[CATALOG_SCOPE_KEY] === CATALOG_SCOPE ||
     categories.some((category) => category === row.category);
@@ -52,6 +78,9 @@ export function rowToProduct(row: ProductRow): ManagedProduct {
   delete specifications[CATALOG_SCOPE_KEY];
   delete specifications[PRICE_KEY];
   delete specifications[CURRENCY_KEY];
+  for (const key of Object.keys(specifications)) {
+    if (key.startsWith("__")) delete specifications[key];
+  }
 
   return {
     id: row.id,
@@ -82,14 +111,19 @@ export function rowToProduct(row: ProductRow): ManagedProduct {
   };
 }
 
-export function productToRow(product: ManagedProduct): ProductRow {
+export function productToRow(product: FulfillmentProduct): ProductRow {
   const specifications = {
-    ...product.specifications,
+    ...Object.fromEntries(Object.entries(product.specifications ?? {}).filter(([key]) => !key.startsWith("__"))),
     [CATALOG_SCOPE_KEY]: CATALOG_SCOPE,
     [CURRENCY_KEY]: product.currency || "USD",
     ...(typeof product.price === "number" && Number.isFinite(product.price) && product.price >= 0
       ? { [PRICE_KEY]: String(product.price) }
       : {}),
+    ...Object.fromEntries(Object.entries(fulfillmentFields).flatMap(([field, key]) => {
+      const value = product[field as FulfillmentField];
+      return value === undefined ? [] : [[key, String(value)]];
+    })),
+    ...(typeof product.fragile === "boolean" ? { __fragile: String(product.fragile) } : {}),
   };
   return {
     id: product.id,
@@ -130,7 +164,7 @@ export async function getPublishedProducts(): Promise<ManagedProduct[]> {
 
   try {
     const { data, error } = await supabase
-      .from("products")
+      .from("storefront_products")
       .select("*")
       .eq("status", "published")
       .order("sort_order", { ascending: true })
@@ -138,7 +172,7 @@ export async function getPublishedProducts(): Promise<ManagedProduct[]> {
     if (error) throw error;
     return ((data as ProductRow[] | null) || []).filter(isManagedCatalogRow).map(rowToProduct);
   } catch {
-    return fallbackManagedProducts();
+    return [];
   }
 }
 
@@ -147,14 +181,16 @@ export async function getPublishedProduct(slug: string): Promise<ManagedProduct 
   if (supabase) {
     try {
       const { data, error } = await supabase
-        .from("products")
+        .from("storefront_products")
         .select("*")
         .eq("slug", slug)
         .eq("status", "published")
         .maybeSingle();
       if (error) throw error;
       return data && isManagedCatalogRow(data as ProductRow) ? rowToProduct(data as ProductRow) : undefined;
-    } catch {}
+    } catch {
+      return undefined;
+    }
   }
   return fallbackManagedProducts().find((product) => product.slug === slug);
 }

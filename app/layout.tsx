@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     "enterprise NVMe SSD",
     "network switch",
     "UPS systems",
-    "WhatsApp ordering",
+    "direct ordering",
     "electronics catalog",
   ],
   creator: siteConfig.name,

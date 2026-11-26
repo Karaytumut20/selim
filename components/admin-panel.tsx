@@ -6,7 +6,7 @@ import {
   ArrowDown, ArrowLeft, ArrowUp, Check, CircleDashed, ImagePlus,
   LayoutGrid, PackagePlus, Pencil, Plus, Search, ShieldCheck, Tags, Trash2, Upload, X,
 } from "lucide-react";
-import { fallbackManagedProducts, slugifyProduct, type ManagedProduct } from "../lib/catalog";
+import { fallbackManagedProducts, slugifyProduct, type FulfillmentField, type FulfillmentProduct } from "../lib/catalog";
 import { categories, formatProductPrice, productCardImages, resolveProductImage } from "../lib/products";
 import { SiteImage } from "./site-image";
 
@@ -14,6 +14,13 @@ type MediaItem = { id: string; name: string; path: string; imageUrl: string };
 type ImageEntry = { id: string; src: string; file?: File };
 
 const MAX_PRODUCT_IMAGES = 8;
+const fulfillmentInputs: Array<{ name: FulfillmentField; label: string; min: string; step: string }> = [
+  { name: "stockQuantity", label: "Available stock", min: "0", step: "1" },
+  { name: "shippingLengthIn", label: "Packed length (in)", min: "0.01", step: "0.01" },
+  { name: "shippingWidthIn", label: "Packed width (in)", min: "0.01", step: "0.01" },
+  { name: "shippingHeightIn", label: "Packed height (in)", min: "0.01", step: "0.01" },
+  { name: "shippingWeightOz", label: "Packed weight (oz)", min: "0.01", step: "0.01" },
+];
 
 async function responseJson<T>(response: Response): Promise<T> {
   const body = (await response.json().catch(() => ({}))) as { error?: string };
@@ -46,7 +53,7 @@ function specificationLines(specifications: Record<string, string>) {
   return Object.entries(specifications).map(([key, value]) => `${key} | ${value}`).join("\n");
 }
 
-function uniqueImages(product: ManagedProduct) {
+function uniqueImages(product: FulfillmentProduct) {
   return [...new Set([product.image, ...product.gallery].filter(Boolean))];
 }
 
@@ -81,7 +88,7 @@ async function optimizeImageForUpload(file: File) {
 }
 
 export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: string }) {
-  const [items, setItems] = useState<ManagedProduct[]>(fallbackManagedProducts());
+  const [items, setItems] = useState<FulfillmentProduct[]>(fallbackManagedProducts());
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -94,7 +101,7 @@ export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: stri
   const [categoryBusy, setCategoryBusy] = useState(false);
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [editedCategoryName, setEditedCategoryName] = useState("");
-  const [pendingDelete, setPendingDelete] = useState<ManagedProduct | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<FulfillmentProduct | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const noticeTimer = useRef<number | null>(null);
@@ -127,7 +134,7 @@ export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: stri
     setLoading(true);
     try {
       const [productBody, categoryBody] = await Promise.all([
-        responseJson<{ products: ManagedProduct[] }>(await fetch("/api/admin/products", { cache: "no-store" })),
+        responseJson<{ products: FulfillmentProduct[] }>(await fetch("/api/admin/products", { cache: "no-store" })),
         responseJson<{ categories: string[] }>(await fetch("/api/admin/categories", { cache: "no-store" })),
       ]);
       setItems(productBody.products);
@@ -257,7 +264,7 @@ export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: stri
     setEditorOpen(true);
   }
 
-  function openEditProduct(item: ManagedProduct) {
+  function openEditProduct(item: FulfillmentProduct) {
     setEditorProductId(item.id);
     resetImages(uniqueImages(item).map((src, index) => ({ id: `existing-${index}-${src}`, src })));
     setEditorRevision((current) => current + 1);
@@ -328,6 +335,10 @@ export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: stri
     const slug = slugifyProduct(String(data.get("slug") || "").trim() || `${partNumber}-${name}`);
     const priceText = String(data.get("price") || "").trim();
     const parsedPrice = priceText ? Number(priceText) : undefined;
+    const fulfillment = Object.fromEntries(fulfillmentInputs.flatMap(({ name }) => {
+      const value = String(data.get(name) ?? "").trim();
+      return value ? [[name, Number(value)]] : [];
+    }));
 
     try {
       const uploadedImages: string[] = [];
@@ -337,7 +348,10 @@ export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: stri
       }
       const finalImages = [...new Set(uploadedImages.filter(Boolean))];
       const primaryImage = finalImages[0] || editorProduct?.image || productCardImages.server;
-      const record: ManagedProduct = {
+      const record: FulfillmentProduct = {
+        ...fulfillment,
+        fragile: data.get("fragile") === "on",
+        updatedAt: editorProduct?.updatedAt,
         id: editorProduct?.id || `${slug}-${crypto.randomUUID().slice(0, 8)}`,
         slug,
         name,
@@ -365,7 +379,7 @@ export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: stri
           : editorProduct?.sortOrder ?? items.length,
       };
       const method = editorProduct ? "PATCH" : "POST";
-      const body = await responseJson<{ product: ManagedProduct }>(
+      const body = await responseJson<{ product: FulfillmentProduct }>(
         await fetch("/api/admin/products", {
           method,
           headers: { "content-type": "application/json" },
@@ -495,6 +509,8 @@ export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: stri
             <label><span>Catalog sort order</span><input name="sortOrder" type="number" min="0" step="1" defaultValue={editorProduct?.sortOrder ?? items.length} /></label>
             <label><span>Price · optional</span><input name="price" type="number" min="0" step="0.01" defaultValue={editorProduct?.price ?? ""} placeholder="Leave empty for Request a quote" /></label>
             <label><span>Currency</span><select name="currency" defaultValue={editorProduct?.currency || "USD"}><option value="USD">USD — US Dollar</option><option value="EUR">EUR — Euro</option><option value="GBP">GBP — British Pound</option><option value="TRY">TRY — Turkish Lira</option></select></label>
+            {fulfillmentInputs.map(({ name, label, min, step }) => <label key={name}><span>{label}</span><input name={name} type="number" min={min} step={step} defaultValue={editorProduct?.[name]} /></label>)}
+            <label className="admin-check"><input name="fragile" type="checkbox" defaultChecked={editorProduct?.fragile ?? false} /><span>Fragile item · review shipping manually</span></label>
             <label className="admin-form-wide"><span>Short description *</span><textarea name="shortDescription" required rows={3} defaultValue={editorProduct?.shortDescription} placeholder="A concise summary used on product cards." /></label>
             <label className="admin-form-wide"><span>Full description *</span><textarea name="longDescription" required rows={6} defaultValue={editorProduct?.longDescription} placeholder="Describe the product, compatibility, configuration options, and ordering details." /></label>
             <label><span>Product highlights · one per line</span><textarea name="typicalFaults" rows={6} defaultValue={editorProduct?.typicalFaults.join("\n")} placeholder={"64 GB capacity\nECC error correction\nRegistered DIMM"} /></label>

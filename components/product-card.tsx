@@ -25,7 +25,7 @@ export function ProductCard({ product }: { product: Product }) {
         <div className={`product-card-price ${hasProductPrice(product) ? "" : "quote"}`}><span>{hasProductPrice(product) ? "Price" : "Pricing"}</span><strong>{formatProductPrice(product)}</strong></div>
         <div className="product-card-actions">
           <Link href={`/products/${product.slug}`}>View product <ArrowUpRight /></Link>
-          <a className="card-buy-button" href={buildProductOrderUrl(product)} target="_blank" rel="noopener noreferrer" aria-label={`${hasProductPrice(product) ? "Buy" : "Request a quote for"} ${product.name} through WhatsApp`}><MessageCircle /> {hasProductPrice(product) ? "Buy now" : "Request quote"}</a>
+          <a className="card-buy-button" href={buildProductOrderUrl(product)} target="_blank" rel="noopener noreferrer" aria-label={`${hasProductPrice(product) ? "Contact sales to order" : "Request a quote for"} ${product.name}`}><MessageCircle /> {hasProductPrice(product) ? "Contact sales" : "Request quote"}</a>
         </div>
       </div>
     </article>

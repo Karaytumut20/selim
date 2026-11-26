@@ -10,7 +10,7 @@ export function PageShell({ children }: { children: React.ReactNode }) {
       <Header />
       <main>{children}</main>
       <Footer />
-      <a className="floating-whatsapp" href={buildGeneralOrderUrl()} target="_blank" rel="noopener noreferrer" aria-label="Contact sales on WhatsApp"><MessageCircle /><span>Order on WhatsApp</span></a>
+      <a className="floating-whatsapp" href={buildGeneralOrderUrl()} target="_blank" rel="noopener noreferrer" aria-label="Contact sales"><MessageCircle /><span>Contact sales</span></a>
     </div>
   );
 }
@@ -42,7 +42,7 @@ export function ConversionBand({ title = "Ready to order or need product advice?
         <span className="eyebrow light">Direct sales / nationwide</span>
         <h2>{title}</h2>
         <p>Send the product code and quantity. We’ll confirm current price, availability, and delivery details directly.</p>
-        <div><a className="button button-light" href={buildGeneralOrderUrl()} target="_blank" rel="noopener noreferrer"><MessageCircle /> Start a WhatsApp Order</a><Link className="text-link-light" href="/products">Browse Product Catalog →</Link></div>
+        <div><a className="button button-light" href={buildGeneralOrderUrl()} target="_blank" rel="noopener noreferrer"><MessageCircle /> Contact Sales</a><Link className="text-link-light" href="/products">Browse Product Catalog →</Link></div>
       </div>
     </section>
   );

@@ -284,6 +284,6 @@ export function getCommerceSpecifications(product: Product) {
     "Product family": product.manufacturerOrFamily,
     Category: product.category,
     Availability: product.repairSupported ? "Available for order inquiry" : "Confirmed on request",
-    "Order method": "Direct WhatsApp order",
+    "Order method": "Contact sales",
   };
 }

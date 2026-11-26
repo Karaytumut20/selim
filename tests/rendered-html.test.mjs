@@ -10,7 +10,7 @@ const staticRoutes = [
   "/contact",
   "/privacy",
   "/terms",
-  "/admin",
+  "/admin/login",
 ];
 
 const productRoutes = [
@@ -81,7 +81,7 @@ test("public pages expose complete indexable metadata", async () => {
     const html = await response.text();
     assert.match(html, /<title>[^<]+<\/title>/i, `${pathname} should have a title`);
     assert.match(html, /<meta name="description" content="[^"]+"/i, `${pathname} should have a description`);
-    assert.match(html, /<link rel="canonical" href="https:\/\/northstar-circuit-works\.umutkaraytu\.chatgpt\.site\//i, `${pathname} should have an absolute canonical`);
+    assert.match(html, /<link rel="canonical" href="https:\/\/selim-k2se\.vercel\.app\//i, `${pathname} should have an absolute canonical`);
     assert.match(html, /<meta property="og:title" content="[^"]+"/i, `${pathname} should have an Open Graph title`);
     assert.match(html, /<meta property="og:image" content="https:\/\//i, `${pathname} should have an absolute social image`);
     assert.doesNotMatch(html, /<meta name="robots" content="[^"]*noindex/i, `${pathname} should remain indexable`);
@@ -101,18 +101,20 @@ test("structured data, crawler files, and private-route directives are consisten
   const robots = await request(worker, "/robots.txt");
   const robotsText = await robots.text();
   assert.equal(robots.status, 200);
-  assert.match(robotsText, /Sitemap: https:\/\/northstar-circuit-works\.umutkaraytu\.chatgpt\.site\/sitemap\.xml/);
+  assert.match(robotsText, /Sitemap: https:\/\/selim-k2se\.vercel\.app\/sitemap\.xml/);
   assert.match(robotsText, /Disallow: \/admin/);
   assert.match(robotsText, /Disallow: \/api\//);
 
   const sitemap = await request(worker, "/sitemap.xml");
   const sitemapText = await sitemap.text();
   assert.equal(sitemap.status, 200);
-  assert.match(sitemapText, /<loc>https:\/\/northstar-circuit-works\.umutkaraytu\.chatgpt\.site\/products<\/loc>/);
+  assert.match(sitemapText, /<loc>https:\/\/selim-k2se\.vercel\.app\/products<\/loc>/);
   assert.doesNotMatch(sitemapText, /<loc>[^<]+\/admin<\/loc>/);
   assert.doesNotMatch(sitemapText, /<loc>[^<]+\/(privacy|terms)<\/loc>/);
 
   const admin = await request(worker, "/admin");
+  assert.equal(admin.status, 307);
+  assert.equal(new URL(admin.headers.get("location"), "http://localhost").href, "http://localhost/admin/login");
   assert.match(admin.headers.get("x-robots-tag") ?? "", /noindex, nofollow/);
 
   const api = await request(worker, "/api/catalog/products");
@@ -124,8 +126,9 @@ test("the public site uses U.S. English and direct ordering signals", async () =
   const homeHtml = await (await request(worker, "/")).text();
 
   assert.match(homeHtml, /<html[^>]+lang="en-US"/i);
-  assert.match(homeHtml, /Direct WhatsApp Ordering/i);
+  assert.match(homeHtml, /Direct Sales/i);
   assert.match(homeHtml, /Request a quote/i);
+  assert.doesNotMatch(homeHtml, /13055550147/);
   assert.doesNotMatch(homeHtml, /__catalogScope|__price|__currency/);
   assert.match(homeHtml, /"@type":"AdministrativeArea","name":"Northeastern United States"/);
   assert.match(homeHtml, /"@type":"Country","name":"United States"/);

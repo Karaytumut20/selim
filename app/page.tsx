@@ -18,14 +18,13 @@ import { ProductCard } from "../components/product-card";
 import { SiteImage } from "../components/site-image";
 import { JsonLd } from "../components/json-ld";
 import { getCatalogCategories, getPublishedProducts } from "../lib/catalog";
-import { formatProductPrice, hasProductPrice, primaryProduct as fallbackPrimaryProduct, resolveProductImage } from "../lib/products";
 import { siteConfig } from "../lib/site-config";
 import { pageMetadata } from "../lib/seo";
-import { buildGeneralOrderUrl, buildProductOrderUrl } from "../lib/whatsapp";
+import { buildGeneralOrderUrl } from "../lib/whatsapp";
 
 export const metadata: Metadata = pageMetadata({
   title: "Servers, Components & Professional Electronics",
-  description: "Browse servers, RAM, processors, monitors, storage, networking, and power products, then order directly through WhatsApp.",
+  description: "Browse servers, RAM, processors, monitors, storage, networking, and power products, then contact sales to order.",
   path: "/",
 });
 
@@ -40,9 +39,16 @@ const categoryCopy: Record<string, string> = {
 
 const steps = [
   ["Choose a product", "Browse categories or search by product code."],
-  ["Buy or request a quote", "WhatsApp opens with product and pricing details already filled in."],
+  ["Contact sales", "The sales message opens with the product details already filled in."],
   ["Confirm the order", "We confirm price, availability, quantity, and delivery."],
   ["Receive your product", "Dispatch and tracking details are shared directly."],
+];
+
+const sourcingSteps = [
+  ["Tell us what you need", "Send the model, part number, or specifications and the quantity you need."],
+  ["Review the quote", "Sales will confirm pricing, availability, and delivery details."],
+  ["Confirm the order", "Approve the written quote and receive order confirmation from sales."],
+  steps[3],
 ];
 
 export const dynamic = "force-dynamic";
@@ -50,7 +56,9 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   const products = await getPublishedProducts();
   const catalogCategories = await getCatalogCategories(products);
-  const primaryProduct = products.find((product) => product.primaryProduct) || products[0] || fallbackPrimaryProduct;
+  const hasCatalog = products.length > 0;
+  const featuredProducts = products.filter((product) => product.featured).slice(0, 6);
+  const salesUrl = buildGeneralOrderUrl();
   const organizationSchema = {
     "@context": "https://schema.org",
     "@graph": [
@@ -79,7 +87,7 @@ export default async function Home() {
         name: siteConfig.name,
         description: siteConfig.description,
         url: siteConfig.url,
-        telephone: siteConfig.phone,
+        ...(siteConfig.phone && { telephone: siteConfig.phone }),
         areaServed: siteConfig.schemaAreaServed,
       },
     ],
@@ -94,10 +102,12 @@ export default async function Home() {
           <div className="commerce-hero-copy">
             <span className="eyebrow light">Professional electronics / U.S.</span>
             <h1>Technology that keeps business moving.</h1>
-            <p>Shop servers, RAM, processors, monitors, storage, networking, and power products. Choose what you need and order through a pre-filled WhatsApp message.</p>
+            <p>{hasCatalog
+              ? "Shop servers, RAM, processors, monitors, storage, networking, and power products. Choose what you need and contact sales to order."
+              : "Need servers, memory, processors, monitors, storage, networking, or power equipment? Tell our sales team what you need and we’ll confirm availability and pricing."}</p>
             <div className="hero-actions">
-              <Link className="button button-primary" href="/products"><Box /> Browse Products</Link>
-              <a className="button button-secondary" href={buildGeneralOrderUrl()} target="_blank" rel="noopener noreferrer"><MessageCircle /> Ask Sales</a>
+              {hasCatalog && <Link className="button button-primary" href="/products"><Box /> Browse Products</Link>}
+              <a className={`button ${hasCatalog ? "button-secondary" : "button-primary"}`} href={salesUrl} target="_blank" rel="noopener noreferrer"><MessageCircle /> {hasCatalog ? "Ask Sales" : "Request a Quote"}</a>
             </div>
             <div className="hero-trust">
               <span><CheckCircle2 /> Direct order support</span>
@@ -117,16 +127,16 @@ export default async function Home() {
               <span>Featured Sector Solution</span>
               <strong>Enterprise Server Infrastructure</strong>
               <small>Rack & Tower Servers · High-Performance Hardware</small>
-              <a href={buildProductOrderUrl(primaryProduct)} target="_blank" rel="noopener noreferrer">
-                {hasProductPrice(primaryProduct) ? "Buy on WhatsApp" : "Request a quote"} <ArrowRight />
+              <a href={salesUrl} target="_blank" rel="noopener noreferrer">
+                Request a quote <ArrowRight />
               </a>
             </div>
           </div>
         </div>
-        <div className="container hero-search">
+        {hasCatalog && <div className="container hero-search">
           <div><span>01</span><strong>Find what you need</strong></div>
           <Link href="/products"><Search /><span>Search by product, family, category, or product code…</span><kbd>⌘ K</kbd></Link>
-        </div>
+        </div>}
       </section>
 
       <section className="commerce-benefits">
@@ -138,15 +148,15 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="catalog-preview content-section">
+      {featuredProducts.length > 0 && <section className="catalog-preview content-section">
         <div className="container">
-          <SectionHeading eyebrow="Featured electronics" title="Business technology, clearly presented." intro="Compare the essential details, confirm compatibility, or start the purchase immediately from any product card." />
-          <div className="product-grid">{products.filter((product) => product.featured).slice(0, 6).map((product) => <ProductCard key={product.id} product={product} />)}</div>
+          <SectionHeading eyebrow="Featured electronics" title="Business technology, clearly presented." intro="Compare product details and contact sales for compatibility, pricing, and availability." />
+          <div className="product-grid">{featuredProducts.map((product) => <ProductCard key={product.id} product={product} />)}</div>
           <div className="section-end-link"><Link href="/products">View all products <ArrowRight /></Link></div>
         </div>
-      </section>
+      </section>}
 
-      <section className="product-categories cream-section content-section">
+      {hasCatalog && <section className="product-categories cream-section content-section">
         <div className="container">
           <SectionHeading eyebrow="Shop by category" title="Find the right product family faster." intro="Each category takes you straight to a filtered product list." />
           <div className="category-editorial">
@@ -157,13 +167,13 @@ export default async function Home() {
             ))}
           </div>
         </div>
-      </section>
+      </section>}
 
       <section className="order-process dark-section content-section">
         <div className="container">
-          <SectionHeading light eyebrow="How ordering works" title="From product page to confirmed order in four steps." intro="The website handles discovery. WhatsApp handles the final conversation, so your questions and order details remain together." />
+          <SectionHeading light eyebrow="How ordering works" title="From inquiry to confirmed order." />
           <ol className="order-step-grid">
-            {steps.map(([title, copy], index) => <li key={title}><span>0{index + 1}</span><MessageCircle /><h3>{title}</h3><p>{copy}</p></li>)}
+            {(hasCatalog ? steps : sourcingSteps).map(([title, copy], index) => <li key={title}><span>0{index + 1}</span><MessageCircle /><h3>{title}</h3><p>{copy}</p></li>)}
           </ol>
         </div>
       </section>
@@ -172,8 +182,8 @@ export default async function Home() {
         <div className="container commerce-assurance">
           <div><span className="eyebrow">Built for business buyers</span><h2>Professional enough for procurement. Simple enough for anyone.</h2></div>
           <div className="assurance-list">
-            <article><ShieldCheck /><div><strong>No forced account</strong><p>Browse and order without registration.</p></div></article>
-            <article><MessageCircle /><div><strong>Pre-filled product message</strong><p>Product name, code, category, and page link are added automatically.</p></div></article>
+            <article><ShieldCheck /><div><strong>Direct sales access</strong><p>Contact sales without registration.</p></div></article>
+            <article><MessageCircle /><div><strong>Product sourcing</strong><p>Share the part number or specifications and we’ll help find a match.</p></div></article>
             <article><PackageCheck /><div><strong>Order confirmation first</strong><p>Price, stock, and delivery are confirmed before the order proceeds.</p></div></article>
           </div>
         </div>
@@ -181,10 +191,10 @@ export default async function Home() {
 
       <section className="conversion-band">
         <div className="container conversion-grid">
-          <span className="eyebrow light">Direct sales / WhatsApp</span>
+          <span className="eyebrow light">Direct sales</span>
           <h2>Know what you need?</h2>
           <p>Send the product code and quantity. We’ll confirm the details and guide you through the order.</p>
-          <div><a className="button button-light" href={buildGeneralOrderUrl()} target="_blank" rel="noopener noreferrer"><MessageCircle /> Start an Order</a><Link className="text-link-light" href="/products">Browse all products →</Link></div>
+          <div><a className="button button-light" href={salesUrl} target="_blank" rel="noopener noreferrer"><MessageCircle /> Start an Order</a>{hasCatalog && <Link className="text-link-light" href="/products">Browse all products →</Link>}</div>
         </div>
       </section>
     </PageShell>

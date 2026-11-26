@@ -1,25 +1,24 @@
-import { getChatGPTUser, chatGPTSignInPath } from "../app/chatgpt-auth";
+import { cookies } from "next/headers";
+import { createPublicSupabaseClient } from "./supabase/server";
 
-function allowedAdminEmails() {
-  return (process.env.ADMIN_EMAILS || "")
+export const adminSessionCookie = "gws_admin_session";
+
+export function isAdminEmail(email: string) {
+  return (process.env.ADMIN_EMAILS ?? "")
     .split(",")
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean);
+    .some((allowed) => Boolean(allowed.trim()) && allowed.trim().toLowerCase() === email.toLowerCase());
 }
 
 export async function getAdminAccess() {
-  const allowlist = allowedAdminEmails();
-  const user = await getChatGPTUser();
+  const token = (await cookies()).get(adminSessionCookie)?.value;
+  const supabase = createPublicSupabaseClient();
+  if (!token || !supabase) return { allowed: false, user: null };
 
-  if (!allowlist.length) {
-    return { allowed: process.env.NODE_ENV !== "production", user, configured: false };
-  }
+  const { data, error } = await supabase.auth.getUser(token);
+  const email = error ? undefined : data.user?.email;
+  if (!email) return { allowed: false, user: null };
 
-  return {
-    allowed: Boolean(user && allowlist.includes(user.email.toLowerCase())),
-    user,
-    configured: true,
-  };
+  return { allowed: isAdminEmail(email), user: { displayName: email } };
 }
 
 export async function requireAdminApiAccess() {
@@ -35,5 +34,5 @@ export async function requireAdminApiAccess() {
 }
 
 export function adminSignInPath() {
-  return chatGPTSignInPath("/admin");
+  return "/admin/login";
 }

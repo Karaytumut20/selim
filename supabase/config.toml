@@ -1,0 +1,13 @@
+project_id = "global-white-star"
+
+[auth]
+site_url = "http://127.0.0.1:3000"
+additional_redirect_urls = [
+  "http://127.0.0.1:3000/account/sign-in",
+  "http://127.0.0.1:3000/account/sign-in?**",
+  "http://127.0.0.1:3000/account/reset-password/callback",
+]
+
+[auth.email]
+enable_signup = true
+enable_confirmations = true

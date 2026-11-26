@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowRight, Menu, MessageCircle, Search, X } from "lucide-react";
 import { Brand } from "./brand";
 import { navItems, siteConfig } from "../lib/site-config";
-import { products as fallbackProducts, type Product } from "../lib/products";
+import type { Product } from "../lib/products";
 import { buildGeneralOrderUrl } from "../lib/whatsapp";
 import { useBodyScrollLock } from "../lib/use-body-scroll-lock";
 
@@ -13,7 +13,7 @@ export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [catalog, setCatalog] = useState<Product[]>(fallbackProducts);
+  const [catalog, setCatalog] = useState<Product[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const normalized = query.trim().toLowerCase();
   const results = useMemo(() => normalized ? catalog.filter((product) =>
@@ -53,7 +53,7 @@ export function Header() {
         <div className="utility-bar">
           <div className="container utility-inner">
             <span>Servers &amp; Professional Electronics</span>
-            <div><a href={`tel:${siteConfig.phoneHref}`}>{siteConfig.phone}</a><a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a><span>Direct WhatsApp Ordering</span></div>
+            <div>{siteConfig.phoneHref && <a href={`tel:${siteConfig.phoneHref}`}>{siteConfig.phone}</a>}<a href={`mailto:${siteConfig.email}`}>{siteConfig.email}</a><span>Direct Sales</span></div>
           </div>
         </div>
         <div className="main-nav">
@@ -64,7 +64,7 @@ export function Header() {
             </nav>
             <div className="nav-actions">
               <button className="search-trigger" onClick={() => setSearchOpen(true)} aria-label="Search products"><Search size={20} /><span>Search</span><kbd>⌘K</kbd></button>
-              <a className="button button-primary header-cta" href={buildGeneralOrderUrl()} target="_blank" rel="noopener noreferrer"><MessageCircle size={18} /> Order on WhatsApp</a>
+              <a className="button button-primary header-cta" href={buildGeneralOrderUrl()} target="_blank" rel="noopener noreferrer"><MessageCircle size={18} /> Contact Sales</a>
               <button className="mobile-menu-trigger" onClick={() => setMenuOpen(true)} aria-label="Open menu"><Menu /></button>
             </div>
           </div>
@@ -100,8 +100,8 @@ export function Header() {
         </nav>
         <div className="mobile-menu-actions">
           <button onClick={() => { setMenuOpen(false); setSearchOpen(true); }}><Search /> Search the catalog</button>
-          <a href={buildGeneralOrderUrl()} target="_blank" rel="noopener noreferrer"><MessageCircle /> Order on WhatsApp</a>
-          <p>{siteConfig.phone}<br />{siteConfig.email}</p>
+          <a href={buildGeneralOrderUrl()} target="_blank" rel="noopener noreferrer"><MessageCircle /> Contact Sales</a>
+          <p>{siteConfig.phone && <>{siteConfig.phone}<br /></>}{siteConfig.email}</p>
         </div>
       </div>
     </>
