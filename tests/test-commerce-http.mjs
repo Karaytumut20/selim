@@ -397,7 +397,7 @@ test("product offers and checkout over real Next.js HTTP routes with isolated pr
   assert.doesNotMatch(guestHtml, /name="amount"/);
   const customerOfferPage = "/products/fixture/offer";
   const accountQuery = new URLSearchParams({ next: customerOfferPage });
-  async function formAt(path, accountCookie) {
+  async function formAt(path, accountCookie, formField) {
     if (process.env.DEBUG_COMMERCE_HTTP) console.error("Get offer form", path);
     const response = await fetch(origin + path, { signal: AbortSignal.timeout(4500), headers: accountCookie ? { Cookie: accountCookie } : {} });
     const html = await response.text();
@@ -411,8 +411,13 @@ test("product offers and checkout over real Next.js HTTP routes with isolated pr
       assert.match("15", browserPattern);
       assert.doesNotMatch("15.999", browserPattern);
     }
+    const form = formField
+      ? Array.from(html.matchAll(/<form\b[^>]*>[\s\S]*?<\/form>/g), ([markup]) => markup)
+        .find((markup) => markup.includes(`name="${formField}"`))
+      : html;
+    assert.ok(form, `Expected a form with field ${formField}`);
     const action = new FormData();
-    for (const input of html.matchAll(/<input\b[^>]*>/g)) {
+    for (const input of form.matchAll(/<input\b[^>]*>/g)) {
       const key = input[0].match(/\bname="([^"]+)"/)?.[1];
       if (!key?.startsWith("$ACTION_")) continue;
       const value = input[0].match(/\bvalue="([^"]*)"/)?.[1] ?? "";
@@ -505,7 +510,7 @@ test("product offers and checkout over real Next.js HTTP routes with isolated pr
   assert.doesNotMatch(await forbiddenAdmin.text(), /Fixture offer/);
   const authorizedAdmin = await fetch(origin + "/admin/offers", { headers: { Cookie: adminCookie } });
   assert.match(await authorizedAdmin.text(), /Fixture offer/);
-  const review = await postForm("/admin/offers", await formAt("/admin/offers", adminCookie), { id: offerId, status: "reviewed" }, adminCookie);
+  const review = await postForm("/admin/offers", await formAt("/admin/offers", adminCookie, "id"), { id: offerId, status: "reviewed" }, adminCookie);
   assert.equal(review.headers.get("location"), "/admin/offers?updated=1");
   const reviewed = await fetch(origin + "/account/offers", { headers: { Cookie: offerCookie } });
   assert.match(await reviewed.text(), /Reviewed/);

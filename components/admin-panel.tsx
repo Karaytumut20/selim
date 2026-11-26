@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowDown, ArrowLeft, ArrowUp, Check, CircleDashed, ImagePlus,
-  LayoutGrid, PackagePlus, Pencil, Plus, Search, ShieldCheck, Tags, Trash2, Upload, X,
+  ArrowDown, ArrowUp, Check, CircleDashed, ImagePlus,
+  PackagePlus, Pencil, Plus, Search, Tags, Trash2, Upload, X,
 } from "lucide-react";
 import { fallbackManagedProducts, slugifyProduct, type FulfillmentField, type FulfillmentProduct } from "../lib/catalog";
 import { categories, formatProductPrice, productCardImages, resolveProductImage } from "../lib/products";
@@ -418,23 +417,8 @@ export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: stri
     }
   }
 
-  return <main className="admin-shell">
-    <aside className="admin-rail">
-      <Link className="admin-brand" href="/">
-        <span>GWS</span>
-        <div><strong>GLOBAL WHITE STAR</strong><small>PRODUCT STUDIO</small></div>
-      </Link>
-      <nav aria-label="Admin navigation">
-        <button type="button" className="active"><LayoutGrid /> Products <span>{items.length}</span></button>
-      </nav>
-      <div className="admin-phase">
-        <ShieldCheck />
-        <div><strong>Secure product workspace</strong><p>Create, edit, publish, and delete products through the protected catalog API.</p></div>
-      </div>
-      <Link className="admin-back" href="/"><ArrowLeft /> Return to website</Link>
-    </aside>
-
-    <section className="admin-workspace">
+  return <>
+    <div>
       <header className="admin-topbar">
         <div><span>Live catalog / {viewerName}</span><h1>Products</h1></div>
         <button className="admin-new" type="button" onClick={openNewProduct}><PackagePlus /> New product</button>
@@ -479,7 +463,7 @@ export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: stri
           {!visibleItems.length && <div className="admin-empty"><Search /><strong>No matching products</strong><p>Try another name, family, category, or part number.</p></div>}
         </div>
       </section>
-    </section>
+    </div>
 
     <div className={`admin-editor-layer ${editorOpen ? "is-open" : ""}`} aria-hidden={!editorOpen}>
       <button className="admin-editor-backdrop" onClick={closeEditor} aria-label="Close product editor" />
@@ -538,5 +522,5 @@ export function AdminPanel({ viewerName = "Administrator" }: { viewerName?: stri
         <footer><button type="button" onClick={() => setPendingDelete(null)}>Keep product</button><button className="danger" disabled={busy} type="button" onClick={() => void confirmDelete()}><Trash2 /> {busy ? "Deleting…" : "Delete product"}</button></footer>
       </div>
     </div>}
-  </main>;
+  </>;
 }
