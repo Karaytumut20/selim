@@ -1031,6 +1031,13 @@ img { max-width: 100%; display: block; }
 .offer-panel { display: grid; gap: 16px; max-width: 620px; margin-inline: auto; }
 .offer-panel a:not(.button) { text-decoration: underline; text-underline-offset: 3px; }
 .offer-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.order-copy { margin-top: 10px; }
+.order-copy .button { min-height: 44px; gap: 8px; padding-inline: 14px; font-size: 13px; }
+.order-copy .button svg { width: 16px; height: 16px; }
+.order-copy :focus-visible { outline: 2px solid var(--orange); outline-offset: 3px; }
+.order-copy-feedback { color: var(--graphite); font-size: 13px; }
+.order-copy-feedback:not(:empty) { margin-top: 8px; }
+.order-copy textarea { width: 100%; margin-top: 8px; padding: 10px; border: 1px solid var(--line); background: var(--white); color: var(--graphite); }
 .offer-form { display: grid; gap: 16px; max-width: 500px; }
 .offer-form label { display: grid; gap: 6px; font-weight: 600; }
 .offer-form input:not([type="hidden"]), .offer-form textarea { width: 100%; padding: 11px 12px; min-height: 44px; border: 1px solid var(--line); border-radius: 4px; background: var(--white); }

@@ -3,12 +3,12 @@ import Link from "next/link";
 import { ArrowRight, BadgeCheck, CheckCircle2, ClipboardCheck, Info, MessageCircle, PackageCheck, Truck } from "lucide-react";
 import { notFound } from "next/navigation";
 import { PageShell, SectionHeading } from "../../../components/page-shell";
-import { ProductOrderLink } from "../../../components/product-actions";
+import { ProductOrderCopyActions, ProductOrderLink } from "../../../components/product-actions";
 import { ProductGallery } from "../../../components/product-gallery";
 import { ProductCard } from "../../../components/product-card";
 import { JsonLd } from "../../../components/json-ld";
 import { getPublishedProduct, getPublishedProducts, getRelatedProductsFromList } from "../../../lib/catalog";
-import { formatProductPrice, getCommerceDescription, getCommerceSpecifications, getProductApplications, getProductHighlights, hasProductPrice, products, resolveProductImage } from "../../../lib/products";
+import { formatProductPrice, getCommerceDescription, getCommerceSpecifications, getProductApplications, getProductHighlights, hasProductPrice, isProductAvailableToOrder, products, resolveProductImage } from "../../../lib/products";
 import { absoluteUrl, breadcrumbJsonLd, pageMetadata, truncateMetaDescription } from "../../../lib/seo";
 import { siteConfig } from "../../../lib/site-config";
 
@@ -33,6 +33,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const { slug } = await params;
   const product = await getPublishedProduct(slug);
   if (!product) notFound();
+  const availableToOrder = isProductAvailableToOrder(product);
   const catalog = await getPublishedProducts();
   const related = getRelatedProductsFromList(product, catalog);
   const productUrl = `${siteConfig.url}/products/${product.slug}`;
@@ -67,14 +68,15 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         <h1>{product.name}</h1>
         <p className="product-family">{product.manufacturerOrFamily}</p>
         <div className={`product-detail-price ${hasProductPrice(product) ? "" : "quote"}`}><span>{hasProductPrice(product) ? "Price" : "Pricing"}</span><strong>{formatProductPrice(product)}</strong></div>
-        <span className={`availability-badge ${product.repairSupported ? "" : "evaluation-badge"}`}><i /> {product.repairSupported ? "Available to order" : "Check availability"}</span>
+        <span className={`availability-badge ${availableToOrder ? "" : "evaluation-badge"}`}><i /> {availableToOrder ? "Available to order" : "Check availability"}</span>
         <p className="product-intro">{product.longDescription}</p>
-        <div className="summary-facts"><div><span>Availability</span><strong>{product.repairSupported ? "Order inquiry open" : "Confirmation required"}</strong></div><div><span>Delivery</span><strong>Confirmed before order</strong></div></div>
+        <div className="summary-facts"><div><span>Availability</span><strong>{availableToOrder ? "Order inquiry open" : "Confirmation required"}</strong></div><div><span>Delivery</span><strong>Confirmed before order</strong></div></div>
         <div className="offer-actions">
           <ProductOrderLink product={product} />
           {product.repairSupported && (product.currency ?? "USD") === "USD" &&
             <Link className="button button-outline" href={`/products/${product.slug}/offer`}>Make an offer</Link>}
         </div>
+        <ProductOrderCopyActions product={product} />
         <a className="replacement-link" href={siteConfig.phoneHref ? `tel:${siteConfig.phoneHref}` : `mailto:${siteConfig.email}`}><MessageCircle /> Speak with sales</a>
         <div className="purchase-note"><Info /><span>{hasProductPrice(product) ? "The listed price is included in your message; stock, warranty, and delivery are confirmed before the order proceeds." : "Ask sales for the current price, stock, warranty, and delivery details."}</span></div>
       </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Filter, Grid3X3, List, Search, SlidersHorizontal, X } from "lucide-react";
-import { categories, hasProductPrice, products as fallbackProducts, type Product } from "../lib/products";
+import { categories, hasProductPrice, isProductAvailableToOrder, products as fallbackProducts, type Product } from "../lib/products";
 import { ProductCard } from "./product-card";
 import { useBodyScrollLock } from "../lib/use-body-scroll-lock";
 
@@ -42,7 +42,8 @@ export function CatalogClient({ initialProducts = fallbackProducts, initialCateg
       const matchesQuery = !normalized || [product.name, product.partNumber, product.manufacturerOrFamily, product.category, product.shortDescription].join(" ").toLowerCase().includes(normalized);
       const matchesCategory = category === "All categories" || product.category === category;
       const matchesFamily = family === "All families" || product.manufacturerOrFamily === family;
-      const matchesAvailability = availability === "All availability" || (availability === "Available to order" ? product.repairSupported : !product.repairSupported);
+      const availabilityLabel = isProductAvailableToOrder(product) ? "Available to order" : "Check availability";
+      const matchesAvailability = availability === "All availability" || availability === availabilityLabel;
       return matchesQuery && matchesCategory && matchesFamily && matchesAvailability;
     });
     return [...result].sort((a, b) => {

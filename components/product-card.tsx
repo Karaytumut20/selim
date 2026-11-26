@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { ArrowUpRight, MessageCircle } from "lucide-react";
-import { formatProductPrice, getCommerceDescription, hasProductPrice, resolveProductImage, type Product } from "../lib/products";
+import { formatProductPrice, getCommerceDescription, hasProductPrice, isProductAvailableToOrder, resolveProductImage, type Product } from "../lib/products";
 import { buildProductOrderUrl } from "../lib/whatsapp";
 import { SiteImage } from "./site-image";
 
 export function ProductCard({ product }: { product: Product }) {
+  const availableToOrder = isProductAvailableToOrder(product);
   return (
     <article className="product-card">
       <Link className="product-card-image" href={`/products/${product.slug}`}>
@@ -16,7 +17,7 @@ export function ProductCard({ product }: { product: Product }) {
           sizes="(max-width: 760px) 100vw, (max-width: 1080px) 50vw, 33vw"
         />
         <span className="image-index">GWS / PRODUCT / {product.partNumber}</span>
-        <span className={`support-state ${product.repairSupported ? "supported" : "evaluation"}`}>{product.repairSupported ? "Available to order" : "Check availability"}</span>
+        <span className={`support-state ${availableToOrder ? "supported" : "evaluation"}`}>{availableToOrder ? "Available to order" : "Check availability"}</span>
       </Link>
       <div className="product-card-body">
         <div className="product-meta"><span>{product.manufacturerOrFamily}</span><span>{product.partNumber}</span></div>

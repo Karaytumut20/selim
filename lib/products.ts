@@ -258,6 +258,10 @@ export function hasProductPrice(product: Product) {
   return typeof product.price === "number" && Number.isFinite(product.price) && product.price >= 0;
 }
 
+export function isProductAvailableToOrder(product: Product) {
+  return product.repairSupported && product.specifications.Availability?.trim().toLowerCase() !== "sourcing on request";
+}
+
 export function formatProductPrice(product: Product) {
   if (!hasProductPrice(product)) return "Request a quote";
   return new Intl.NumberFormat("en-US", {
@@ -283,7 +287,7 @@ export function getCommerceSpecifications(product: Product) {
     "Product code": product.partNumber,
     "Product family": product.manufacturerOrFamily,
     Category: product.category,
-    Availability: product.repairSupported ? "Available for order inquiry" : "Confirmed on request",
+    Availability: isProductAvailableToOrder(product) ? "Available for order inquiry" : "Confirmed on request",
     "Order method": "Contact sales",
   };
 }
